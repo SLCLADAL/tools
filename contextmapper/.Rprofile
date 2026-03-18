@@ -1,1 +1,1 @@
-options(renv.consent = FALSE)
+if (requireNamespace("renv", quietly = TRUE)) renv::deactivate()
