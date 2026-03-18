@@ -1,13 +1,4 @@
----
-title: "TextCleaner"
-subtitle: "LADAL Text Cleaning Tool"
-format:
-  html:
-    toc: true
-    toc-depth: 3
-    theme: cosmo
-    highlight-style: github
----
+# TextCleaner - LADAL Text Cleaning Tool"
 
 ## About
 
