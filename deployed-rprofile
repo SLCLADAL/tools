@@ -1,4 +1,4 @@
-setwd('~/notebooks')
+setwd('~/tools')
 setHook(
 	'rstudio.sessionInit', function(newSession) {
 		if (newSession)
