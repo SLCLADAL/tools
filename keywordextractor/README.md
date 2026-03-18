@@ -1,13 +1,4 @@
----
-title: "KeywordExtractor"
-subtitle: "LADAL Keyword & Keyness Analysis Tool"
-format:
-  html:
-    toc: true
-    toc-depth: 3
-    theme: cosmo
-    highlight-style: github
----
+# KeywordExtracto - LADAL Keyword & Keyness Analysis Tool
 
 ## About
 
