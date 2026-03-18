@@ -1,5 +1,5 @@
 ---
-title: "UDPTagger"
+title: "PosTagger"
 subtitle: "LADAL POS Tagging & Dependency Parsing Tool"
 format:
   html:
@@ -208,10 +208,10 @@ at build time via a `postBuild` file — see `DEPLOYMENT.md`.
 
 ## Citation
 
-Schweinberger, Martin. (2025). *UDPTagger: LADAL POS Tagging & Dependency Parsing Tool*. Brisbane: The University of Queensland. <https://ladal.edu.au/tools.html>
+Schweinberger, Martin. (2025). *osTagger: LADAL POS Tagging & Dependency Parsing Tool*. Brisbane: The University of Queensland. <https://ladal.edu.au/tools.html>
 
 ```bibtex
-@misc{schweinberger2025udptagger,
+@misc{schweinberger2025postagger,
   author       = {Schweinberger, Martin},
   title        = {{UDPTagger}: {LADAL} {POS} Tagging \& Dependency Parsing Tool},
   year         = {2025},
