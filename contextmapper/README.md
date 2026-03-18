@@ -1,13 +1,4 @@
----
-title: "ContextMapper"
-subtitle: "LADAL Word Co-occurrence Network Tool"
-format:
-  html:
-    toc: true
-    toc-depth: 3
-    theme: cosmo
-    highlight-style: github
----
+# ContextMapper - LADAL Word Co-occurrence Network Tool
 
 ## About
 
