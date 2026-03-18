@@ -1,13 +1,4 @@
----
-title: "PosTagger"
-subtitle: "LADAL POS Tagging & Dependency Parsing Tool"
-format:
-  html:
-    toc: true
-    toc-depth: 3
-    theme: cosmo
-    highlight-style: github
----
+# PosTagger - LADAL POS Tagging & Dependency Parsing Tool
 
 ## About
 
