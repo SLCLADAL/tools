@@ -1,4 +1,4 @@
-# TextCleaner - LADAL Text Cleaning Tool"
+# TextCleaner - LADAL Text Cleaning Tool
 
 ## About
 
