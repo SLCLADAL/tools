@@ -1,0 +1,63 @@
+#!/bin/bash
+# ============================================================
+#  start — tools-env Binder start script
+#
+#  Runs BEFORE JupyterLab opens. Pre-executes whichever launcher
+#  notebook was requested so the Shiny app is already starting
+#  (or ready) when the user sees the page.
+#
+#  Place this file at the root of the tools-env repo as: start
+#  Make it executable: chmod +x start
+# ============================================================
+
+set -e
+
+TOOLS_DIR="${HOME}/tools"
+
+# ── Determine which launcher was requested ──────────────────
+# nbgitpuller sets JUPYTERHUB_SERVICE_PREFIX; the urlpath contains
+# the notebook path, e.g. lab/tree/tools/wordfinder_launcher.ipynb
+# We extract the notebook name from NB_PREFIX or the SERVER_APP_URL.
+# Most reliable: check which launcher notebooks exist and pick the one
+# that matches the URL path environment variable Binder sets.
+
+LAUNCHER_NB=""
+
+# Binder/JupyterHub passes the requested path in JUPYTER_NOTEBOOK_PATH
+# or encodes it in the urlpath. We inspect common env vars:
+for VAR in JUPYTER_NOTEBOOK_PATH JUPYTERHUB_NOTEBOOK_PATH NB_PREFIX; do
+  VAL="${!VAR}"
+  if [[ "$VAL" == *"_launcher"* ]]; then
+    LAUNCHER_NB="${TOOLS_DIR}/$(basename "$VAL")"
+    break
+  fi
+done
+
+# Fallback: look for any *_launcher.ipynb files in tools dir
+# and execute all of them (safe — each starts on a unique port)
+if [[ -z "$LAUNCHER_NB" ]]; then
+  echo "[start] Could not detect specific launcher from env; skipping pre-execution."
+  echo "[start] Notebooks will execute when the user opens them and runs the cell."
+else
+  if [[ -f "$LAUNCHER_NB" ]]; then
+    echo "[start] Pre-executing launcher: $LAUNCHER_NB"
+    jupyter nbconvert \
+      --to notebook \
+      --execute \
+      --ExecutePreprocessor.timeout=120 \
+      --inplace \
+      "$LAUNCHER_NB" \
+      && echo "[start] ✔ Launcher executed successfully." \
+      || echo "[start] ⚠ Launcher execution timed out or failed — user can run manually."
+  else
+    echo "[start] Launcher not found at $LAUNCHER_NB — skipping."
+  fi
+fi
+
+# ── Start JupyterLab (required — Binder expects this script to do so) ──
+echo "[start] Starting JupyterLab..."
+exec jupyter lab \
+  --ip=0.0.0.0 \
+  --no-browser \
+  --NotebookApp.default_url=/lab \
+  "$@"
