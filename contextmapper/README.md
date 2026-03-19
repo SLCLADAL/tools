@@ -1,8 +1,8 @@
-# ContextMapper - LADAL Word Co-occurrence Network Tool
+# WordWebber - LADAL Word Co-occurrence Network Tool
 
 ## About
 
-**NetworkMapper** is a browser-based word co-occurrence network tool developed by the [Language Technology and Data Analysis Laboratory (LADAL)](https://ladal.edu.au) at the University of Queensland. It takes plain-text files, builds a feature co-occurrence matrix (FCM) using a sliding context window, and visualises the words that co-occur most frequently with a keyword of your choice — both as an interactive network you can explore in the browser and as a static downloadable plot.
+**WordWebber** is a browser-based word co-occurrence network tool developed by the [Language Technology and Data Analysis Laboratory (LADAL)](https://ladal.edu.au) at the University of Queensland. It takes plain-text files, builds a feature co-occurrence matrix (FCM) using a sliding context window, and visualises the words that co-occur most frequently with a keyword of your choice — both as an interactive network you can explore in the browser and as a static downloadable plot.
 
 No R knowledge or software installation is required. The tool runs entirely in the browser via [Binder](https://mybinder.org/).
 
@@ -91,20 +91,20 @@ Use **MyBinder.org** if you do not have AAF/Tuakiri access. It is free and open 
 **ARDC BinderHub** *(recommended — requires AAF / Tuakiri login)*
 
 ```
-https://binderhub.atap-binder.cloud.edu.au/v2/gh/SLCLADAL/interactive-notebooks-environment/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FSLCLADAL%252Ftools%26urlpath%3Dshiny%252Ftree%252Ftools%252Fnetworkmapper%252F%26branch%3Dmain
+https://binderhub.atap-binder.cloud.edu.au/v2/gh/SLCLADAL/interactive-notebooks-environment/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FSLCLADAL%252Ftools%26urlpath%3Dshiny%252Ftree%252Ftools%252Fwordwebber%252F%26branch%3Dmain
 ```
 
 **MyBinder.org** *(open access — no login required)*
 
 ```
-https://mybinder.org/v2/gh/SLCLADAL/interactive-notebooks-environment/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FSLCLADAL%252Ftools%26urlpath%3Dshiny%252Ftree%252Ftools%252Fnetworkmapper%252F%26branch%3Dmain
+https://mybinder.org/v2/gh/SLCLADAL/interactive-notebooks-environment/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FSLCLADAL%252Ftools%26urlpath%3Dshiny%252Ftree%252Ftools%252Fwordwebber%252F%26branch%3Dmain
 ```
 
 ---
 
 ## Input format
 
-NetworkMapper accepts **plain-text files only** (`.txt`). Files should be:
+Wordwebber accepts **plain-text files only** (`.txt`). Files should be:
 
 - Saved with UTF-8 encoding where possible
 - Unformatted (no Word `.docx`, no PDF, no HTML)
@@ -148,12 +148,12 @@ if not already present. Check before deploying.
 
 ## Citation
 
-Schweinberger, Martin. (2026). *NetworkMapper: LADAL Word Co-occurrence Network Tool*. Brisbane: The University of Queensland. <https://ladal.edu.au/tools.html>
+Schweinberger, Martin. (2026). *WordWebber: LADAL Word Co-occurrence Network Tool*. Brisbane: The University of Queensland. <https://ladal.edu.au/tools.html>
 
 ```bibtex
-@misc{schweinberger2026networkmapper,
+@misc{schweinberger2026wordwebber,
   author       = {Schweinberger, Martin},
-  title        = {{NetworkMapper}: {LADAL} Word Co-occurrence Network Tool},
+  title        = {{WordWebber}: {LADAL} Word Co-occurrence Network Tool},
   year         = {2026},
   organization = {The University of Queensland,
                   School of Languages and Cultures},
