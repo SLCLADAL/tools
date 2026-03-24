@@ -71,7 +71,7 @@ load_corpus <- function(file_df) {
 # Tokenise corpus: lowercase, strip non-word characters, optional
 # stopword removal, optional lemmatisation.
 build_tokens <- function(corp, stopword_lang, lemmatise = FALSE) {
-
+  
   toks <- tokens(corp,
                  remove_punct   = TRUE,
                  remove_symbols = TRUE,
@@ -85,13 +85,13 @@ build_tokens <- function(corp, stopword_lang, lemmatise = FALSE) {
     # Remove very short tokens (single letters add noise)
     tokens_remove(pattern   = "^.{1}$",
                   valuetype = "regex")
-
+  
   if (stopword_lang != "none") {
     toks <- tokens_remove(toks,
                           pattern = stopwords(stopword_lang),
                           padding = FALSE)
   }
-
+  
   if (lemmatise) {
     # Load textstem lazily — it pulls in koRpus/sylly (~15 packages) so we
     # only pay that cost when the user actually requests lemmatisation.
@@ -105,7 +105,7 @@ build_tokens <- function(corp, stopword_lang, lemmatise = FALSE) {
       replacement = textstem::lemmatize_words(types(toks))
     )
   }
-
+  
   toks
 }
 
@@ -152,15 +152,15 @@ compute_mi <- function(O, f_node, f_collocate, N_pairs) {
 keyword_cooc <- function(fcm_obj, freq_vec, keyword, top_n, min_freq) {
   kw        <- tolower(trimws(keyword))
   all_feats <- featnames(fcm_obj)
-
+  
   if (!kw %in% all_feats) return(NULL)
-
+  
   # Direct sparse-row extraction — correct and efficient
   kw_idx <- which(all_feats == kw)
   kw_row <- fcm_obj[kw_idx, , drop = FALSE]          # 1 × V sparse matrix
   kw_vec <- as.numeric(kw_row)                        # dense vector length V
   names(kw_vec) <- all_feats
-
+  
   # With tri=FALSE the matrix is symmetric, so also check the column in case
   # quanteda stores anything asymmetrically (defensive, usually redundant)
   kw_col <- fcm_obj[, kw_idx, drop = FALSE]           # V × 1 sparse matrix
@@ -169,32 +169,32 @@ keyword_cooc <- function(fcm_obj, freq_vec, keyword, top_n, min_freq) {
   # Take element-wise max to catch any asymmetric entries
   kw_vec <- pmax(kw_vec, kw_vec2)
   names(kw_vec) <- all_feats
-
+  
   # Remove self and apply minimum frequency threshold
   kw_vec <- kw_vec[names(kw_vec) != kw]
   kw_vec <- kw_vec[kw_vec >= min_freq]
-
+  
   if (length(kw_vec) == 0L) return(NULL)
-
+  
   kw_vec <- sort(kw_vec, decreasing = TRUE)
   kw_vec <- head(kw_vec, top_n)
-
+  
   collocates <- names(kw_vec)
   O_vals     <- as.integer(kw_vec)
-
+  
   # Frequencies for MI computation
   f_node       <- freq_vec[kw]
   f_node       <- ifelse(is.na(f_node), 1L, as.integer(f_node))
   f_collocates <- as.integer(
     ifelse(is.na(freq_vec[collocates]), 1L, freq_vec[collocates])
   )
-
+  
   # N_pairs: total co-occurrence slots in the FCM (exact denominator for MI)
   N_pairs <- sum(fcm_obj)
   if (N_pairs == 0) N_pairs <- 1
-
+  
   MI_vals <- compute_mi(O_vals, f_node, f_collocates, N_pairs)
-
+  
   tibble::tibble(
     from  = kw,
     to    = collocates,
@@ -210,22 +210,22 @@ keyword_cooc <- function(fcm_obj, freq_vec, keyword, top_n, min_freq) {
 # and produces a V×k matrix, whereas we need a k×k submatrix.
 neighbourhood_fcm <- function(fcm_obj, edges) {
   if (is.null(edges) || nrow(edges) == 0L) return(NULL)
-
+  
   nodes_keep <- unique(c(edges$from, edges$to))
   all_feats  <- featnames(fcm_obj)
   keep_idx   <- which(all_feats %in% nodes_keep)
-
+  
   if (length(keep_idx) == 0L) return(NULL)
-
+  
   # Direct k×k submatrix — safe to densify at top_n scale
   sub_mat <- as.matrix(fcm_obj[keep_idx, keep_idx, drop = FALSE])
   rownames(sub_mat) <- all_feats[keep_idx]
   colnames(sub_mat) <- all_feats[keep_idx]
-
+  
   # Symmetrise (defensive — should already be symmetric with tri=FALSE)
   sub_mat <- sub_mat + t(sub_mat)
   diag(sub_mat) <- 0
-
+  
   as.fcm(sub_mat)
 }
 
@@ -235,7 +235,7 @@ neighbourhood_fcm <- function(fcm_obj, edges) {
 
 ui <- fluidPage(
   title = "WordWebber | LADAL",
-
+  
   tags$head(tags$style(HTML(paste0("
     body { font-family:'Segoe UI',Arial,sans-serif;
            background:#f7f4fb; color:#222; margin:0; }
@@ -361,127 +361,127 @@ ui <- fluidPage(
     .vis-container { border:1px solid #e0d8ec; border-radius:8px;
                      background:white; }
   ")))),
-
+  
   # ── Banner ──────────────────────────────────────────────────
   div(class = "ww-banner",
-    div(style = "font-size:2rem;", "🕸️"),
-    div(
-      p(class = "ww-title", "WordWebber"),
-      p(class = "ww-sub",
-        "Word co-occurrence network analysis · ",
-        tags$a("LADAL", href = "https://ladal.edu.au",
-               style = "color:#f0c060;"))
-    )
+      div(style = "font-size:2rem;", "🕸️"),
+      div(
+        p(class = "ww-title", "WordWebber"),
+        p(class = "ww-sub",
+          "Word co-occurrence network analysis · ",
+          tags$a("LADAL", href = "https://ladal.edu.au",
+                 style = "color:#f0c060;"))
+      )
   ),
-
+  
   # ── Body ────────────────────────────────────────────────────
   div(class = "ww-body",
-
-    # ── Sidebar ───────────────────────────────────────────────
-    div(class = "ww-side",
-
-      # STEP 1 — Upload
-      div(class = "ww-sec", "① Upload texts"),
-      div(class = "ww-info",
-        "Upload one or more ", tags$b(".txt"), " files.
+      
+      # ── Sidebar ───────────────────────────────────────────────
+      div(class = "ww-side",
+          
+          # STEP 1 — Upload
+          div(class = "ww-sec", "① Upload texts"),
+          div(class = "ww-info",
+              "Upload one or more ", tags$b(".txt"), " files.
          All files are merged into one corpus."),
-      fileInput("files", NULL,
-                multiple    = TRUE,
-                accept      = ".txt",
-                buttonLabel = "📂 Choose .txt files"),
-      uiOutput("corpus_status"),
-
-      # STEP 2 — Keyword
-      div(class = "ww-sec", "② Keyword"),
-      div(class = "ww-info",
-        "The network shows words that co-occur most with this
+          fileInput("files", NULL,
+                    multiple    = TRUE,
+                    accept      = ".txt",
+                    buttonLabel = "📂 Choose .txt files"),
+          uiOutput("corpus_status"),
+          
+          # STEP 2 — Keyword
+          div(class = "ww-sec", "② Keyword"),
+          div(class = "ww-info",
+              "The network shows words that co-occur most with this
          keyword within the context window. Matching is always
          case-insensitive."),
-      textInput("keyword", "Keyword", value = "",
-                placeholder = "e.g. climate, australia, …"),
-
-      # STEP 3 — Text processing
-      div(class = "ww-sec", "③ Text processing"),
-
-      selectInput("stopword_lang", "Remove stopwords",
-                  choices  = STOPWORD_LANGS,
-                  selected = "en"),
-
-      checkboxInput("lemmatise",
-                    "Lemmatise tokens (English only)",
-                    value = FALSE),
-      div(class = "ww-info", style = "margin-top:-6px;",
-        "Lemmatisation reduces words to their base form
+          textInput("keyword", "Keyword", value = "",
+                    placeholder = "e.g. climate, australia, …"),
+          
+          # STEP 3 — Text processing
+          div(class = "ww-sec", "③ Text processing"),
+          
+          selectInput("stopword_lang", "Remove stopwords",
+                      choices  = STOPWORD_LANGS,
+                      selected = "en"),
+          
+          checkboxInput("lemmatise",
+                        "Lemmatise tokens (English only)",
+                        value = FALSE),
+          div(class = "ww-info", style = "margin-top:-6px;",
+              "Lemmatisation reduces words to their base form
          (e.g. ", tags$em("running → run"), ", ",
-        tags$em("better → good"), "). Uses ",
-        tags$a("textstem", href = "https://cran.r-project.org/package=textstem"),
-        " — English only."
+              tags$em("better → good"), "). Uses ",
+              tags$a("textstem", href = "https://cran.r-project.org/package=textstem"),
+              " — English only."
+          ),
+          
+          # STEP 4 — Network settings
+          div(class = "ww-sec", "④ Network settings"),
+          
+          sliderInput("window_size", "Context window (words each side)",
+                      min = 1, max = 15, value = 5, step = 1),
+          
+          sliderInput("top_n", "Max co-occurring words shown",
+                      min = 5, max = 50, value = 20, step = 1),
+          
+          numericInput("min_freq", "Min. co-occurrence count",
+                       value = 2, min = 1, step = 1),
+          
+          numericInput("min_mi", "Min. MI score (edge filter)",
+                       value = 0, min = -10, max = 20, step = 0.5),
+          
+          # STEP 5 — Visual options
+          div(class = "ww-sec", "⑤ Visual options"),
+          
+          selectInput("node_size_by", "Node size proportional to",
+                      choices  = c("Word frequency in corpus" = "freq",
+                                   "Fixed size (all equal)"   = "fixed"),
+                      selected = "freq"),
+          
+          selectInput("edge_color", "Edge colour",
+                      choices  = c("Gray"   = "gray60",
+                                   "Purple" = "#8e44ad",
+                                   "Blue"   = "steelblue",
+                                   "Green"  = "#27ae60",
+                                   "Black"  = "gray10"),
+                      selected = "gray60"),
+          
+          sliderInput("edge_alpha", "Edge transparency",
+                      min = 0.1, max = 1.0, value = 0.6, step = 0.05),
+          
+          sliderInput("node_size", "Node size (base / fixed)",
+                      min = 0.5, max = 5, value = 2, step = 0.5),
+          
+          sliderInput("label_size", "Label size",
+                      min = 2, max = 10, value = 5, step = 0.5),
+          
+          actionButton("run_network", "🕸️  Build Network",
+                       class = "btn-primary"),
+          
+          # STEP 6 — Download
+          div(class = "ww-sec", "⑥ Download"),
+          uiOutput("download_buttons")
       ),
-
-      # STEP 4 — Network settings
-      div(class = "ww-sec", "④ Network settings"),
-
-      sliderInput("window_size", "Context window (words each side)",
-                  min = 1, max = 15, value = 5, step = 1),
-
-      sliderInput("top_n", "Max co-occurring words shown",
-                  min = 5, max = 50, value = 20, step = 1),
-
-      numericInput("min_freq", "Min. co-occurrence count",
-                   value = 2, min = 1, step = 1),
-
-      numericInput("min_mi", "Min. MI score (edge filter)",
-                   value = 0, min = -10, max = 20, step = 0.5),
-
-      # STEP 5 — Visual options
-      div(class = "ww-sec", "⑤ Visual options"),
-
-      selectInput("node_size_by", "Node size proportional to",
-        choices  = c("Word frequency in corpus" = "freq",
-                     "Fixed size (all equal)"   = "fixed"),
-        selected = "freq"),
-
-      selectInput("edge_color", "Edge colour",
-        choices  = c("Gray"   = "gray60",
-                     "Purple" = "#8e44ad",
-                     "Blue"   = "steelblue",
-                     "Green"  = "#27ae60",
-                     "Black"  = "gray10"),
-        selected = "gray60"),
-
-      sliderInput("edge_alpha", "Edge transparency",
-                  min = 0.1, max = 1.0, value = 0.6, step = 0.05),
-
-      sliderInput("node_size", "Node size (base / fixed)",
-                  min = 0.5, max = 5, value = 2, step = 0.5),
-
-      sliderInput("label_size", "Label size",
-                  min = 2, max = 10, value = 5, step = 0.5),
-
-      actionButton("run_network", "🕸️  Build Network",
-                   class = "btn-primary"),
-
-      # STEP 6 — Download
-      div(class = "ww-sec", "⑥ Download"),
-      uiOutput("download_buttons")
-    ),
-
-    # ── Main panel ──────────────────────────────────────────
-    div(class = "ww-main",
-      uiOutput("welcome_box"),
-      uiOutput("stats_cards"),
-      uiOutput("results_ui")
-    )
+      
+      # ── Main panel ──────────────────────────────────────────
+      div(class = "ww-main",
+          uiOutput("welcome_box"),
+          uiOutput("stats_cards"),
+          uiOutput("results_ui")
+      )
   ),
-
+  
   # ── Footer ──────────────────────────────────────────────────
   div(class = "ww-footer",
-    span("WordWebber · LADAL · University of Queensland"),
-    tags$a("ladal.edu.au", href = "https://ladal.edu.au"),
-    tags$a("Network Analysis Tutorial",
-           href = "https://ladal.edu.au/tutorials/net/net.html"),
-    tags$a("Cite this tool",
-           href = "https://ladal.edu.au/about.html#citing")
+      span("WordWebber · LADAL · University of Queensland"),
+      tags$a("ladal.edu.au", href = "https://ladal.edu.au"),
+      tags$a("Network Analysis Tutorial",
+             href = "https://ladal.edu.au/tutorials/net/net.html"),
+      tags$a("Cite this tool",
+             href = "https://ladal.edu.au/about.html#citing")
   )
 )
 
@@ -490,57 +490,57 @@ ui <- fluidPage(
 # ══════════════════════════════════════════════════════════════
 
 server <- function(input, output, session) {
-
+  
   # ── Corpus (built once on upload) ────────────────────────
   corp <- reactive({
     req(input$files)
     load_corpus(input$files)
   })
-
+  
   # ── All heavy computation inside one eventReactive ────────
   # Nothing expensive fires until the user clicks the button.
   net_data <- eventReactive(input$run_network, {
     req(corp(), nchar(trimws(input$keyword)) > 0)
-
+    
     kw <- tolower(trimws(input$keyword))
-
+    
     withProgress(message = "Building network…", value = 0, {
-
+      
       incProgress(0.15, detail = "Tokenising & cleaning corpus")
       toks <- build_tokens(corp(),
                            stopword_lang = input$stopword_lang,
                            lemmatise     = isTRUE(input$lemmatise))
-
+      
       incProgress(0.15, detail = "Computing word frequencies")
       freq_vec <- build_dfm_freq(toks)
-
+      
       incProgress(0.25, detail = "Building co-occurrence matrix")
       fcm_obj <- build_fcm(toks, window_size = input$window_size)
-
+      
       incProgress(0.25, detail = "Extracting keyword neighbourhood")
       ed <- keyword_cooc(fcm_obj, freq_vec, kw,
                          top_n    = input$top_n,
                          min_freq = input$min_freq)
-
+      
       if (is.null(ed) || nrow(ed) == 0L) {
         incProgress(0.2)
         return(NULL)
       }
-
+      
       # Apply MI filter
       min_mi <- as.numeric(input$min_mi %||% 0)
       ed <- ed[!is.na(ed$MI) & ed$MI >= min_mi, ]
-
+      
       if (nrow(ed) == 0L) {
         incProgress(0.2)
         return(NULL)
       }
-
+      
       incProgress(0.15, detail = "Preparing graph")
       sub_fcm <- neighbourhood_fcm(fcm_obj, ed)
-
+      
       incProgress(0.05, detail = "Done")
-
+      
       list(
         edges    = ed,
         sub_fcm  = sub_fcm,
@@ -550,9 +550,9 @@ server <- function(input, output, session) {
       )
     })
   })
-
+  
   `%||%` <- function(a, b) if (is.null(a)) b else a
-
+  
   # ── Corpus status ────────────────────────────────────────
   output$corpus_status <- renderUI({
     if (is.null(input$files)) {
@@ -566,72 +566,72 @@ server <- function(input, output, session) {
                        collapse = ", ")))
     }
   })
-
+  
   # ── Welcome box ──────────────────────────────────────────
   output$welcome_box <- renderUI({
     if (input$run_network == 0) {
       div(class = "ww-info", style = "font-size:.93rem;",
-        tags$b("Welcome to WordWebber."), br(),
-        "Upload your plain-text files, enter a keyword, and click ",
-        tags$b("Build Network"), " to visualise which words
+          tags$b("Welcome to WordWebber."), br(),
+          "Upload your plain-text files, enter a keyword, and click ",
+          tags$b("Build Network"), " to visualise which words
          co-occur most frequently with that keyword.", br(), br(),
-        "Texts are automatically lowercased and cleaned. You can
+          "Texts are automatically lowercased and cleaned. You can
          optionally remove stopwords and lemmatise tokens.", br(), br(),
-        tags$b("Node size"), " reflects each word's overall corpus
+          tags$b("Node size"), " reflects each word's overall corpus
          frequency. ", tags$b("Edge thickness"), " reflects
          MI score — how strongly the word is attracted to the
          keyword beyond chance.", br(), br(),
-        tags$a("→ Learn more about network analysis",
-               href = "https://ladal.edu.au/tutorials/net/net.html")
+          tags$a("→ Learn more about network analysis",
+                 href = "https://ladal.edu.au/tutorials/net/net.html")
       )
     }
   })
-
+  
   # ── Stat cards ───────────────────────────────────────────
   output$stats_cards <- renderUI({
     req(input$run_network > 0)
     nd <- net_data()
     if (is.null(nd)) return(NULL)
-
+    
     top_mi   <- nd$edges |> dplyr::slice_max(MI, n = 1, with_ties = FALSE)
     top_word <- if (nrow(top_mi) > 0) top_mi$to[1] else "—"
     top_mi_v <- if (nrow(top_mi) > 0) round(top_mi$MI[1], 2) else "—"
-
+    
     div(class = "ww-stats",
-      div(class = "ww-card",
-        div(class = "ww-val", nrow(nd$edges)),
-        div(class = "ww-lbl", "Co-occurring words")),
-      div(class = "ww-card",
-        div(class = "ww-val", sum(nd$edges$cooc)),
-        div(class = "ww-lbl", "Total co-occurrences")),
-      div(class = "ww-card",
-        div(class = "ww-val", top_word),
-        div(class = "ww-lbl", paste0("Top MI: ", top_mi_v))),
-      div(class = "ww-card",
-        div(class = "ww-val", format(nd$n_tokens, big.mark = ",")),
-        div(class = "ww-lbl", "Corpus tokens"))
+        div(class = "ww-card",
+            div(class = "ww-val", nrow(nd$edges)),
+            div(class = "ww-lbl", "Co-occurring words")),
+        div(class = "ww-card",
+            div(class = "ww-val", sum(nd$edges$cooc)),
+            div(class = "ww-lbl", "Total co-occurrences")),
+        div(class = "ww-card",
+            div(class = "ww-val", top_word),
+            div(class = "ww-lbl", paste0("Top MI: ", top_mi_v))),
+        div(class = "ww-card",
+            div(class = "ww-val", format(nd$n_tokens, big.mark = ",")),
+            div(class = "ww-lbl", "Corpus tokens"))
     )
   })
-
+  
   # ── Results UI ───────────────────────────────────────────
   output$results_ui <- renderUI({
     req(input$run_network > 0)
     nd <- net_data()
-
+    
     if (is.null(nd)) {
       kw <- tolower(trimws(input$keyword))
       return(div(class = "ww-warn",
-        paste0("⚠ No results for keyword '", kw, "'. "),
-        br(),
-        "Possible reasons: the word does not appear in the corpus after
+                 paste0("⚠ No results for keyword '", kw, "'. "),
+                 br(),
+                 "Possible reasons: the word does not appear in the corpus after
          cleaning and stopword removal; no co-occurrences meet the
          minimum frequency or MI threshold; or the word was removed
          as a stopword.", br(), br(),
-        "Try: lower minimum frequency · lower MI threshold · a
+                 "Try: lower minimum frequency · lower MI threshold · a
          different stopword language · disabling lemmatisation."
       ))
     }
-
+    
     tabsetPanel(
       tabPanel("🕸️ Interactive network", br(),
                visNetworkOutput("vis_net", height = "560px")),
@@ -641,7 +641,7 @@ server <- function(input, output, session) {
                DTOutput("cooc_table"))
     )
   })
-
+  
   # ── Helper: node size vector ─────────────────────────────
   # Scales corpus frequency to a 1–max_size range for visNetwork.
   node_sizes <- function(ids, kw, freq_vec, node_size_by, base_size) {
@@ -659,17 +659,17 @@ server <- function(input, output, session) {
     sizes[ids == kw] <- max(sizes) * 1.2
     sizes
   }
-
+  
   # ── Interactive network ──────────────────────────────────
   output$vis_net <- renderVisNetwork({
     nd <- net_data()
     req(!is.null(nd))
-
+    
     ed        <- nd$edges
     kw        <- nd$keyword
     freq_vec  <- nd$freq_vec
     all_nodes <- unique(c(ed$from, ed$to))
-
+    
     # Edge width: MI score, rescaled to [1, 8]
     mi_vals    <- ed$MI
     mi_min     <- min(mi_vals, na.rm = TRUE)
@@ -677,45 +677,52 @@ server <- function(input, output, session) {
     mi_range   <- max(mi_max - mi_min, 0.001)
     edge_width <- 1 + ((mi_vals - mi_min) / mi_range) * 7
     edge_width[is.na(edge_width)] <- 1
-
-    vis_nodes <- tibble::tibble(id = all_nodes) |>
-      dplyr::mutate(
-        label            = id,
-        value            = node_sizes(id, kw, freq_vec,
+    
+    # Build node table row by row to avoid vectorisation issues
+    # with named-vector indexing and match() returning NA for keyword
+    vis_nodes <- do.call(rbind, lapply(all_nodes, function(node_id) {
+      f      <- as.integer(freq_vec[node_id])
+      if (is.na(f)) f <- 0L
+      is_kw  <- node_id == kw
+      cooc_i <- ed$cooc[match(node_id, ed$to)]
+      mi_i   <- ed$MI[match(node_id, ed$to)]
+      
+      tooltip <- if (is_kw) {
+        paste0("<b>", node_id, "</b><br>keyword<br>freq: ", f)
+      } else {
+        paste0("<b>", node_id, "</b>",
+               "<br>co-occ: ",   ifelse(is.na(cooc_i), "—", cooc_i),
+               "<br>MI: ",       ifelse(is.na(mi_i),   "—",
+                                        round(mi_i, 2)),
+               "<br>freq: ", f)
+      }
+      
+      data.frame(
+        id               = node_id,
+        label            = node_id,
+        value            = node_sizes(node_id, kw, freq_vec,
                                       input$node_size_by,
                                       input$node_size),
-        color.background = dplyr::if_else(id == kw,
-                             LADAL_PURPLE, "#a585c8"),
-        color.border     = dplyr::if_else(id == kw,
-                             LADAL_GOLD,   "#7a5ba8"),
+        color.background = if (is_kw) LADAL_PURPLE else "#a585c8",
+        color.border     = if (is_kw) LADAL_GOLD   else "#7a5ba8",
         color.highlight  = LADAL_GOLD,
-        font.size        = dplyr::if_else(id == kw, 18L, 13L),
-        font.bold        = dplyr::if_else(id == kw, TRUE, FALSE),
-        title            = {
-          f <- as.integer(freq_vec[id])
-          f[is.na(f)] <- 0L
-          dplyr::if_else(
-            id == kw,
-            paste0("<b>", id, "</b><br>keyword<br>freq: ", f),
-            paste0("<b>", id, "</b>",
-                   "<br>co-occ: ",
-                   ed$cooc[match(id, ed$to)],
-                   "<br>MI: ",
-                   round(ed$MI[match(id, ed$to)], 2),
-                   "<br>freq: ", f))
-        }
+        font.size        = if (is_kw) 18L else 13L,
+        font.bold        = is_kw,
+        title            = tooltip,
+        stringsAsFactors = FALSE
       )
-
-    vis_edges <- ed |>
-      dplyr::mutate(
-        width = edge_width,
-        title = paste0("Co-occurrences: ", cooc,
-                       "<br>MI score: ", MI),
-        color = list(color     = input$edge_color,
-                     highlight = LADAL_GOLD,
-                     opacity   = input$edge_alpha)
-      )
-
+    }))
+    
+    vis_edges <- data.frame(
+      from  = ed$from,
+      to    = ed$to,
+      width = edge_width,
+      title = paste0("Co-occurrences: ", ed$cooc,
+                     "<br>MI score: ",   round(ed$MI, 3)),
+      color = input$edge_color,
+      stringsAsFactors = FALSE
+    )
+    
     visNetwork::visNetwork(
       nodes  = vis_nodes,
       edges  = vis_edges,
@@ -734,6 +741,9 @@ server <- function(input, output, session) {
         shadow      = list(enabled = TRUE, size = 4)
       ) |>
       visNetwork::visEdges(
+        color  = list(color     = input$edge_color,
+                      highlight = LADAL_GOLD,
+                      opacity   = input$edge_alpha),
         smooth = list(enabled   = TRUE,
                       type      = "curvedCW",
                       roundness = 0.1),
@@ -762,30 +772,30 @@ server <- function(input, output, session) {
         tooltipDelay      = 80
       )
   })
-
+  
   # ── Static network ───────────────────────────────────────
   output$static_net <- renderPlot({
     nd <- net_data()
     req(!is.null(nd) && !is.null(nd$sub_fcm))
-
+    
     kw       <- nd$keyword
     ed       <- nd$edges
     sub_fcm  <- nd$sub_fcm
     freq_vec <- nd$freq_vec
     feats    <- featnames(sub_fcm)
-
+    
     # Vertex sizes: frequency-proportional or fixed
     if (input$node_size_by == "freq") {
       freqs      <- as.numeric(freq_vec[feats])
       freqs[is.na(freqs)] <- 1
       v_sizes    <- input$node_size * 0.5 +
-                    input$node_size * 1.5 * (freqs / max(freqs, 1))
+        input$node_size * 1.5 * (freqs / max(freqs, 1))
       v_sizes[feats == kw] <- max(v_sizes) * 1.15
     } else {
       v_sizes <- rep(input$node_size, length(feats))
       v_sizes[feats == kw] <- input$node_size * 1.6
     }
-
+    
     # Label sizes: MI-proportional for neighbours, larger for keyword
     label_sizes <- vapply(feats, function(f) {
       if (f == kw) return(input$label_size * 1.6)
@@ -794,9 +804,9 @@ server <- function(input, output, session) {
       mi_range <- max(ed$MI, na.rm = TRUE) - min(ed$MI, na.rm = TRUE)
       if (mi_range == 0) return(input$label_size)
       input$label_size * (0.5 + 0.5 *
-        (ed$MI[idx] - min(ed$MI, na.rm = TRUE)) / mi_range)
+                            (ed$MI[idx] - min(ed$MI, na.rm = TRUE)) / mi_range)
     }, numeric(1))
-
+    
     # Edge weight for textplot_network: use MI scores
     # The sub_fcm contains raw counts; we scale by MI for display
     # by modifying the matrix values
@@ -812,7 +822,7 @@ server <- function(input, output, session) {
     mi_mat[mi_mat < 0] <- 0
     diag(mi_mat) <- 0
     mi_fcm <- as.fcm(mi_mat)
-
+    
     quanteda.textplots::textplot_network(
       x              = mi_fcm,
       min_freq       = 0,
@@ -841,12 +851,12 @@ server <- function(input, output, session) {
         plot.subtitle = element_text(color = "#666", size = 9.5)
       )
   }, bg = "white")
-
+  
   # ── Co-occurrence table ──────────────────────────────────
   output$cooc_table <- renderDT({
     nd <- net_data()
     req(!is.null(nd))
-
+    
     display <- nd$edges |>
       dplyr::select(
         Keyword      = from,
@@ -856,7 +866,7 @@ server <- function(input, output, session) {
         `Freq (collocate)` = f_w2
       ) |>
       dplyr::arrange(dplyr::desc(`MI score`))
-
+    
     datatable(
       display,
       rownames   = FALSE,
@@ -874,24 +884,24 @@ server <- function(input, output, session) {
                input$window_size)
       )
     ) |>
-    formatRound("MI score", digits = 3) |>
-    formatStyle(
-      "MI score",
-      background         = styleColorBar(
-        range(nd$edges$MI, na.rm = TRUE), "#d8c8f0"),
-      backgroundSize     = "98% 70%",
-      backgroundRepeat   = "no-repeat",
-      backgroundPosition = "center"
-    ) |>
-    formatStyle(
-      "Co-occ (O)",
-      background         = styleColorBar(nd$edges$cooc, "#c8e6d8"),
-      backgroundSize     = "98% 70%",
-      backgroundRepeat   = "no-repeat",
-      backgroundPosition = "center"
-    )
+      formatRound("MI score", digits = 3) |>
+      formatStyle(
+        "MI score",
+        background         = styleColorBar(
+          range(nd$edges$MI, na.rm = TRUE), "#d8c8f0"),
+        backgroundSize     = "98% 70%",
+        backgroundRepeat   = "no-repeat",
+        backgroundPosition = "center"
+      ) |>
+      formatStyle(
+        "Co-occ (O)",
+        background         = styleColorBar(nd$edges$cooc, "#c8e6d8"),
+        backgroundSize     = "98% 70%",
+        backgroundRepeat   = "no-repeat",
+        backgroundPosition = "center"
+      )
   })
-
+  
   # ── Download buttons ─────────────────────────────────────
   output$download_buttons <- renderUI({
     if (input$run_network == 0 || is.null(net_data()))
@@ -903,7 +913,7 @@ server <- function(input, output, session) {
       downloadButton("dl_csv",  "⬇ Table (.csv)",   class = "ww-dl")
     )
   })
-
+  
   # ── Download handlers ────────────────────────────────────
   output$dl_xlsx <- downloadHandler(
     filename = function()
@@ -911,14 +921,14 @@ server <- function(input, output, session) {
     content  = function(file)
       writexl::write_xlsx(as.data.frame(net_data()$edges), file)
   )
-
+  
   output$dl_csv <- downloadHandler(
     filename = function()
       paste0("wordwebber_", net_data()$keyword, "_", Sys.Date(), ".csv"),
     content  = function(file)
       readr::write_csv(net_data()$edges, file)
   )
-
+  
   output$dl_png <- downloadHandler(
     filename = function()
       paste0("wordwebber_", net_data()$keyword, "_", Sys.Date(), ".png"),
@@ -930,18 +940,18 @@ server <- function(input, output, session) {
       sub_fcm  <- nd$sub_fcm
       freq_vec <- nd$freq_vec
       feats    <- featnames(sub_fcm)
-
+      
       if (input$node_size_by == "freq") {
         freqs   <- as.numeric(freq_vec[feats])
         freqs[is.na(freqs)] <- 1
         v_sizes <- input$node_size * 0.5 +
-                   input$node_size * 1.5 * (freqs / max(freqs, 1))
+          input$node_size * 1.5 * (freqs / max(freqs, 1))
         v_sizes[feats == kw] <- max(v_sizes) * 1.15
       } else {
         v_sizes <- rep(input$node_size, length(feats))
         v_sizes[feats == kw] <- input$node_size * 1.6
       }
-
+      
       label_sizes <- vapply(feats, function(f) {
         if (f == kw) return(input$label_size * 1.6)
         idx <- match(f, ed$to)
@@ -949,9 +959,9 @@ server <- function(input, output, session) {
         mi_range <- max(ed$MI, na.rm = TRUE) - min(ed$MI, na.rm = TRUE)
         if (mi_range == 0) return(input$label_size)
         input$label_size * (0.5 + 0.5 *
-          (ed$MI[idx] - min(ed$MI, na.rm = TRUE)) / mi_range)
+                              (ed$MI[idx] - min(ed$MI, na.rm = TRUE)) / mi_range)
       }, numeric(1))
-
+      
       mi_mat <- as.matrix(sub_fcm)
       for (i in seq_len(nrow(ed))) {
         w1 <- ed$from[i]; w2 <- ed$to[i]
@@ -964,7 +974,7 @@ server <- function(input, output, session) {
       mi_mat[mi_mat < 0] <- 0
       diag(mi_mat) <- 0
       mi_fcm <- as.fcm(mi_mat)
-
+      
       p <- quanteda.textplots::textplot_network(
         x              = mi_fcm,
         min_freq       = 0,
@@ -985,7 +995,7 @@ server <- function(input, output, session) {
           plot.title = element_text(color = LADAL_PURPLE, face = "bold"),
           plot.subtitle = element_text(color = "#666", size = 9)
         )
-
+      
       ggplot2::ggsave(file, plot = p,
                       width = 10, height = 8, dpi = 200, bg = "white")
     }

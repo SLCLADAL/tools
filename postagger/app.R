@@ -22,10 +22,13 @@ LADAL_GOLD   <- "#f0a500"
 
 # Model directory — pre-bundled models live here inside Binder.
 # postBuild downloads to ~/udpipe-models (i.e. /home/jovyan/udpipe-models).
-# We also check /srv/udpipe-models as a fallback for other deployments.
+# Resolve HOME explicitly — path.expand() can fail in some Binder envs.
+.home <- Sys.getenv("HOME", unset = "/home/jovyan")
 MODEL_DIRS <- c(
-  path.expand("~/udpipe-models"),
-  "/srv/udpipe-models"
+  file.path(.home, "udpipe-models"),
+  "/home/jovyan/udpipe-models",
+  "/srv/udpipe-models",
+  getwd()
 )
 
 # Full model list from udpipe (language → display label)
@@ -155,14 +158,28 @@ model_cache <- new.env(hash = TRUE, parent = emptyenv())
 
 # Search all MODEL_DIRS for a .udpipe file matching the language key.
 find_model_file <- function(language) {
-  for (d in MODEL_DIRS) {
+  # Build search dirs: MODEL_DIRS plus one level of subdirectories
+  all_dirs <- unique(c(
+    MODEL_DIRS,
+    unlist(lapply(MODEL_DIRS[dir.exists(MODEL_DIRS)], function(d)
+      list.dirs(d, recursive = FALSE, full.names = TRUE)
+    ))
+  ))
+  
+  for (d in all_dirs) {
     if (!dir.exists(d)) next
-    # Match files like "english-ewt-ud-2.5-191206.udpipe"
+    # Match "english-ewt-ud-2.5-191206.udpipe" style filenames
     candidates <- list.files(d,
-                             pattern    = paste0("^", language, ".*\\.udpipe$"),
-                             full.names = TRUE)
-    if (length(candidates) > 0) return(candidates[1])
+                             pattern     = paste0("^", language, ".*\.udpipe$"),
+                             full.names  = TRUE,
+                             ignore.case = TRUE)
+    if (length(candidates) > 0) {
+      message("Found model '", language, "' at: ", candidates[1])
+      return(candidates[1])
+    }
   }
+  message("No pre-downloaded model for '", language, "'. Dirs searched: ",
+          paste(all_dirs[dir.exists(all_dirs)], collapse = ", "))
   NULL
 }
 
@@ -171,15 +188,15 @@ get_model <- function(language) {
   if (exists(language, envir = model_cache)) {
     return(get(language, envir = model_cache))
   }
-
+  
   # Try to find a pre-downloaded model file first
   model_file <- find_model_file(language)
-
+  
   # Fall back to on-demand download into the user's home udpipe-models dir
   if (is.null(model_file)) {
     dl_dir <- path.expand("~/udpipe-models")
     dir.create(dl_dir, showWarnings = FALSE, recursive = TRUE)
-
+    
     dl <- tryCatch(
       udpipe_download_model(language = language, model_dir = dl_dir),
       error = function(e) {
@@ -187,7 +204,7 @@ get_model <- function(language) {
              "\nCheck your internet connection or try a pre-bundled language.")
       }
     )
-
+    
     if (isTRUE(dl$download_failed)) {
       stop("Model download failed for '", language, "': ",
            dl$download_message,
@@ -195,7 +212,7 @@ get_model <- function(language) {
     }
     model_file <- dl$file_model
   }
-
+  
   m <- udpipe_load_model(model_file)
   assign(language, m, envir = model_cache)
   m
@@ -207,19 +224,19 @@ get_model <- function(language) {
 
 tag_texts <- function(file_df, language) {
   model <- get_model(language)
-
+  
   results <- purrr::imap(
     setNames(file_df$datapath, file_df$name),
     function(path, fname) {
       txt <- paste(readLines(path, warn = FALSE), collapse = " ")
       txt <- iconv(txt, to = "UTF-8", sub = "byte")
-
+      
       ann <- udpipe_annotate(model, x = txt,
-                              doc_id = tools::file_path_sans_ext(fname))
+                             doc_id = tools::file_path_sans_ext(fname))
       as.data.frame(ann, detailed = TRUE)
     }
   )
-
+  
   dplyr::bind_rows(results)
 }
 
@@ -267,7 +284,7 @@ build_annotated_texts <- function(tagged_df) {
 
 ui <- fluidPage(
   title = "POSTagger | LADAL",
-
+  
   tags$head(tags$style(HTML(paste0("
     body { font-family:'Segoe UI',Arial,sans-serif;
            background:#f7f4fb; color:#222; margin:0; }
@@ -405,77 +422,77 @@ ui <- fluidPage(
       font-weight:700; margin-left:4px;
     }
   ")))),
-
+  
   # ── Banner ────────────────────────────────────────────────────
   div(class = "ud-banner",
-    div(style = "font-size:2rem;", "🏷️"),
-    div(
-      p(class = "ud-title", "POSTagger"),
-      p(class = "ud-sub",
-        "POS tagging & dependency parsing · 65+ languages · ",
-        tags$a("LADAL", href = "https://ladal.edu.au",
-               style = "color:#f0c060;"))
-    )
+      div(style = "font-size:2rem;", "🏷️"),
+      div(
+        p(class = "ud-title", "POSTagger"),
+        p(class = "ud-sub",
+          "POS tagging & dependency parsing · 65+ languages · ",
+          tags$a("LADAL", href = "https://ladal.edu.au",
+                 style = "color:#f0c060;"))
+      )
   ),
-
+  
   # ── Body ──────────────────────────────────────────────────────
   div(class = "ud-body",
-
-    # ── Sidebar ─────────────────────────────────────────────────
-    div(class = "ud-side",
-
-      # STEP 1
-      div(class = "ud-sec", "① Upload texts"),
-      div(class = "ud-info",
-        "Upload one or more ", tags$b(".txt"), " files.
+      
+      # ── Sidebar ─────────────────────────────────────────────────
+      div(class = "ud-side",
+          
+          # STEP 1
+          div(class = "ud-sec", "① Upload texts"),
+          div(class = "ud-info",
+              "Upload one or more ", tags$b(".txt"), " files.
          Each file is tagged and kept as a separate document."),
-      fileInput("files", NULL,
-                multiple    = TRUE,
-                accept      = ".txt",
-                buttonLabel = "📂 Choose .txt files"),
-      uiOutput("corpus_status"),
-
-      # STEP 2
-      div(class = "ud-sec", "② Language model"),
-      div(class = "ud-info",
-        "Models marked ", tags$b("★"), " are pre-loaded and start
+          fileInput("files", NULL,
+                    multiple    = TRUE,
+                    accept      = ".txt",
+                    buttonLabel = "📂 Choose .txt files"),
+          uiOutput("corpus_status"),
+          
+          # STEP 2
+          div(class = "ud-sec", "② Language model"),
+          div(class = "ud-info",
+              "Models marked ", tags$b("★"), " are pre-loaded and start
          instantly. Others download automatically on first use
          (typically 10–30 seconds)."),
-      selectInput("language", "Language / treebank",
-                  choices  = ALL_MODELS,
-                  selected = "english-ewt"),
-      uiOutput("model_status"),
-
-      # STEP 3
-      div(class = "ud-sec", "③ Tag"),
-      actionButton("run_tag", "🏷️  Tag texts",
-                   class = "btn-primary"),
-
-      # STEP 4
-      div(class = "ud-sec", "④ Download results"),
-      div(class = "ud-download-note",
-        "Both output formats are always available after tagging."),
-      uiOutput("download_buttons")
-    ),
-
-    # ── Main panel ───────────────────────────────────────────────
-    div(class = "ud-main",
-      uiOutput("welcome_box"),
-      uiOutput("stats_cards"),
-      uiOutput("results_ui")
-    )
+          selectInput("language", "Language / treebank",
+                      choices  = ALL_MODELS,
+                      selected = "english-ewt"),
+          uiOutput("model_status"),
+          
+          # STEP 3
+          div(class = "ud-sec", "③ Tag"),
+          actionButton("run_tag", "🏷️  Tag texts",
+                       class = "btn-primary"),
+          
+          # STEP 4
+          div(class = "ud-sec", "④ Download results"),
+          div(class = "ud-download-note",
+              "Both output formats are always available after tagging."),
+          uiOutput("download_buttons")
+      ),
+      
+      # ── Main panel ───────────────────────────────────────────────
+      div(class = "ud-main",
+          uiOutput("welcome_box"),
+          uiOutput("stats_cards"),
+          uiOutput("results_ui")
+      )
   ),
-
+  
   # ── Footer ───────────────────────────────────────────────────
   div(class = "ud-footer",
-    span("POSTagger · LADAL · University of Queensland"),
-    tags$a("ladal.edu.au", href = "https://ladal.edu.au"),
-    tags$a("POS Tagging Tutorial",
-           href = "https://ladal.edu.au/tutorials/postag/postag.html"),
-    tags$a("Universal Dependencies",
-           href = "https://universaldependencies.org"),
-    tags$a("Cite this tool",
-           href = "https://ladal.edu.au/about.html#citing")
+      span("POSTagger · LADAL · University of Queensland"),
+      tags$a("ladal.edu.au", href = "https://ladal.edu.au"),
+      tags$a("POS Tagging Tutorial",
+             href = "https://ladal.edu.au/tutorials/postag/postag.html"),
+      tags$a("Universal Dependencies",
+             href = "https://universaldependencies.org"),
+      tags$a("Cite this tool",
+             href = "https://ladal.edu.au/about.html#citing")
   )
 )
 
@@ -484,7 +501,7 @@ ui <- fluidPage(
 # ══════════════════════════════════════════════════════════════
 
 server <- function(input, output, session) {
-
+  
   # ── Corpus status ────────────────────────────────────────────
   output$corpus_status <- renderUI({
     if (is.null(input$files)) {
@@ -498,7 +515,7 @@ server <- function(input, output, session) {
                        collapse = ", ")))
     }
   })
-
+  
   # ── Model status badge ───────────────────────────────────────
   output$model_status <- renderUI({
     lang <- input$language
@@ -512,14 +529,14 @@ server <- function(input, output, session) {
           "⏳ This model will be downloaded on first use (~10–30s)")
     }
   })
-
+  
   # ── Core computation ─────────────────────────────────────────
   tagged <- eventReactive(input$run_tag, {
     req(input$files)
-
+    
     withProgress(message = "Tagging…", value = 0, {
       incProgress(0.2, detail = paste("Loading model:", input$language))
-
+      
       result <- tryCatch({
         tag_texts(input$files, input$language)
       }, error = function(e) {
@@ -527,89 +544,89 @@ server <- function(input, output, session) {
                          type = "error", duration = 15)
         NULL
       })
-
+      
       incProgress(0.8, detail = "Building outputs")
       result
     })
   })
-
+  
   tidy_table <- reactive({
     req(tagged())
     build_tidy(tagged())
   })
-
+  
   annotated_texts <- reactive({
     req(tagged())
     build_annotated_texts(tagged())
   })
-
+  
   # ── Welcome box ──────────────────────────────────────────────
   output$welcome_box <- renderUI({
     if (input$run_tag == 0) {
       div(class = "ud-info", style = "font-size:.93rem;",
-        tags$b("Welcome to POSTagger."), br(),
-        "Upload your plain-text files, select a language model,
+          tags$b("Welcome to POSTagger."), br(),
+          "Upload your plain-text files, select a language model,
          and click ", tags$b("Tag texts"), " to perform
          tokenisation, POS tagging, lemmatisation, and dependency
          parsing using the ", tags$a("UDPipe",
-           href = "https://ufal.mff.cuni.cz/udpipe"),
-        " toolkit.", br(), br(),
-        "Results are available in two formats: a ", tags$b("tidy table"),
-        " (one row per token with all annotation columns), and ",
-        tags$b("annotated text files"), " (word_UPOSTAG format
+                                     href = "https://ufal.mff.cuni.cz/udpipe"),
+          " toolkit.", br(), br(),
+          "Results are available in two formats: a ", tags$b("tidy table"),
+          " (one row per token with all annotation columns), and ",
+          tags$b("annotated text files"), " (word_UPOSTAG format
          ready for corpus tools or further processing).", br(), br(),
-        tags$a("→ Learn more: POS Tagging Tutorial",
-               href = "https://ladal.edu.au/tutorials/postag/postag.html"), br(),
-        tags$a("→ Universal Dependencies tag set",
-               href = "https://universaldependencies.org/u/pos/")
+          tags$a("→ Learn more: POS Tagging Tutorial",
+                 href = "https://ladal.edu.au/tutorials/postag/postag.html"), br(),
+          tags$a("→ Universal Dependencies tag set",
+                 href = "https://universaldependencies.org/u/pos/")
       )
     }
   })
-
+  
   # ── Stat cards ───────────────────────────────────────────────
   output$stats_cards <- renderUI({
     req(input$run_tag > 0, tidy_table())
     tt <- tidy_table()
-
+    
     n_docs   <- length(unique(tt$Document))
     n_sents  <- length(unique(paste(tt$Document, tt$Sentence)))
     n_tokens <- nrow(tt)
     n_upos   <- length(unique(tt$UPOS[!is.na(tt$UPOS)]))
-
+    
     div(class = "ud-stats",
-      div(class = "ud-card",
-        div(class = "ud-val", n_docs),
-        div(class = "ud-lbl", "Documents")),
-      div(class = "ud-card",
-        div(class = "ud-val", format(n_sents, big.mark = ",")),
-        div(class = "ud-lbl", "Sentences")),
-      div(class = "ud-card",
-        div(class = "ud-val", format(n_tokens, big.mark = ",")),
-        div(class = "ud-lbl", "Tokens")),
-      div(class = "ud-card",
-        div(class = "ud-val", n_upos),
-        div(class = "ud-lbl", "UPOS categories"))
+        div(class = "ud-card",
+            div(class = "ud-val", n_docs),
+            div(class = "ud-lbl", "Documents")),
+        div(class = "ud-card",
+            div(class = "ud-val", format(n_sents, big.mark = ",")),
+            div(class = "ud-lbl", "Sentences")),
+        div(class = "ud-card",
+            div(class = "ud-val", format(n_tokens, big.mark = ",")),
+            div(class = "ud-lbl", "Tokens")),
+        div(class = "ud-card",
+            div(class = "ud-val", n_upos),
+            div(class = "ud-lbl", "UPOS categories"))
     )
   })
-
+  
   # ── Results UI (tabs) ────────────────────────────────────────
   output$results_ui <- renderUI({
     req(input$run_tag > 0, tidy_table())
-
+    
     tabsetPanel(
       tabPanel("📋 Tidy table",       br(), DTOutput("tidy_dt")),
       tabPanel("📊 POS summary",      br(), plotOutput("pos_plot",
-                                              height = "380px")),
+                                                       height = "380px")),
       tabPanel("📄 Annotated texts",  br(), uiOutput("annotated_preview")),
       tabPanel("ℹ️ Tag guide",         br(), uiOutput("tag_guide"))
     )
   })
-
+  
   # ── Tidy table ───────────────────────────────────────────────
   output$tidy_dt <- renderDT({
     tt <- tidy_table()
     req(nrow(tt) > 0)
-
+    
     datatable(
       tt,
       rownames   = FALSE,
@@ -629,30 +646,30 @@ server <- function(input, output, session) {
                " tokens · model: ", input$language)
       )
     ) |>
-    formatStyle(
-      "UPOS",
-      color = styleEqual(
-        c("NOUN", "VERB", "ADJ", "ADV", "PROPN",
-          "DET",  "ADP",  "AUX", "CCONJ", "PUNCT"),
-        c("#1a6b3c", "#1a3a6b", "#6b1a1a", "#6b4a1a", "#4a1a6b",
-          "#555",    "#555",    "#555",    "#555",     "#999")
-      ),
-      fontWeight = styleEqual(
-        c("NOUN","VERB","ADJ","ADV","PROPN"),
-        rep("bold", 5)
+      formatStyle(
+        "UPOS",
+        color = styleEqual(
+          c("NOUN", "VERB", "ADJ", "ADV", "PROPN",
+            "DET",  "ADP",  "AUX", "CCONJ", "PUNCT"),
+          c("#1a6b3c", "#1a3a6b", "#6b1a1a", "#6b4a1a", "#4a1a6b",
+            "#555",    "#555",    "#555",    "#555",     "#999")
+        ),
+        fontWeight = styleEqual(
+          c("NOUN","VERB","ADJ","ADV","PROPN"),
+          rep("bold", 5)
+        )
       )
-    )
   })
-
+  
   # ── POS frequency bar chart ───────────────────────────────────
   output$pos_plot <- renderPlot({
     tt <- tidy_table()
     req(nrow(tt) > 0)
-
+    
     pos_counts <- tt |>
       dplyr::filter(!is.na(UPOS), UPOS != "PUNCT", UPOS != "SPACE") |>
       dplyr::count(UPOS, sort = TRUE)
-
+    
     upos_colours <- c(
       NOUN  = "#1a6b3c", VERB  = "#1a3a6b", ADJ   = "#6b1a1a",
       ADV   = "#6b4a1a", PROPN = "#4a1a6b", DET   = "#888888",
@@ -661,10 +678,10 @@ server <- function(input, output, session) {
       PART  = "#aaaadd", INTJ  = "#ddaadd", SYM   = "#ddddaa",
       X     = "#eeeeee", OTHER = "#dddddd"
     )
-
+    
     pos_counts$fill_col <- upos_colours[pos_counts$UPOS]
     pos_counts$fill_col[is.na(pos_counts$fill_col)] <- "#dddddd"
-
+    
     ggplot(pos_counts,
            aes(x = reorder(UPOS, n), y = n, fill = UPOS)) +
       geom_col(fill = pos_counts$fill_col[order(pos_counts$n)],
@@ -687,12 +704,12 @@ server <- function(input, output, session) {
         legend.position    = "none"
       )
   }, bg = "white")
-
+  
   # ── Annotated text preview ───────────────────────────────────
   output$annotated_preview <- renderUI({
     at <- annotated_texts()
     req(nrow(at) > 0)
-
+    
     doc_list <- purrr::pmap(at, function(doc_id, text) {
       preview <- substr(text, 1, 500)
       if (nchar(text) > 500) preview <- paste0(preview, "…")
@@ -709,84 +726,84 @@ server <- function(input, output, session) {
         tags$hr()
       )
     })
-
+    
     tagList(
       div(class = "ud-info",
-        "Preview of annotated text files (word_UPOSTAG format). ",
-        "Download the full files using the buttons in the sidebar."),
+          "Preview of annotated text files (word_UPOSTAG format). ",
+          "Download the full files using the buttons in the sidebar."),
       doc_list
     )
   })
-
+  
   # ── Tag guide ────────────────────────────────────────────────
   output$tag_guide <- renderUI({
     div(style = "max-width:750px;",
-      tags$h4(style = paste0("color:", LADAL_PURPLE),
-              "Universal POS Tags (UPOS)"),
-      tags$p("POSTagger uses the",
-             tags$a("Universal Dependencies",
-                    href = "https://universaldependencies.org/u/pos/"),
-             "tag set, which is consistent across all languages."),
-      DT::renderDT(
-        data.frame(
-          Tag = c("NOUN","VERB","ADJ","ADV","PROPN","PRON",
-                  "DET","ADP","AUX","CCONJ","SCONJ","NUM",
-                  "PART","INTJ","PUNCT","SYM","X"),
-          Description = c(
-            "Noun (common noun)",
-            "Verb (main verb)",
-            "Adjective",
-            "Adverb",
-            "Proper noun (name)",
-            "Pronoun",
-            "Determiner (the, a, this)",
-            "Adposition (preposition/postposition)",
-            "Auxiliary verb (is, will, have)",
-            "Coordinating conjunction (and, but, or)",
-            "Subordinating conjunction (that, because, if)",
-            "Numeral",
-            "Particle (not, 's)",
-            "Interjection (oh, wow, hmm)",
-            "Punctuation",
-            "Symbol (%, $, =)",
-            "Other / foreign words / typos"
-          )
+        tags$h4(style = paste0("color:", LADAL_PURPLE),
+                "Universal POS Tags (UPOS)"),
+        tags$p("POSTagger uses the",
+               tags$a("Universal Dependencies",
+                      href = "https://universaldependencies.org/u/pos/"),
+               "tag set, which is consistent across all languages."),
+        DT::renderDT(
+          data.frame(
+            Tag = c("NOUN","VERB","ADJ","ADV","PROPN","PRON",
+                    "DET","ADP","AUX","CCONJ","SCONJ","NUM",
+                    "PART","INTJ","PUNCT","SYM","X"),
+            Description = c(
+              "Noun (common noun)",
+              "Verb (main verb)",
+              "Adjective",
+              "Adverb",
+              "Proper noun (name)",
+              "Pronoun",
+              "Determiner (the, a, this)",
+              "Adposition (preposition/postposition)",
+              "Auxiliary verb (is, will, have)",
+              "Coordinating conjunction (and, but, or)",
+              "Subordinating conjunction (that, because, if)",
+              "Numeral",
+              "Particle (not, 's)",
+              "Interjection (oh, wow, hmm)",
+              "Punctuation",
+              "Symbol (%, $, =)",
+              "Other / foreign words / typos"
+            )
+          ),
+          rownames = FALSE,
+          options  = list(dom = "t", pageLength = 20)
         ),
-        rownames = FALSE,
-        options  = list(dom = "t", pageLength = 20)
-      ),
-      tags$h4(style = paste0("color:", LADAL_PURPLE, "; margin-top:20px;"),
-              "Dependency Relations (DepRel)"),
-      tags$p("Common Universal Dependencies relations:"),
-      tags$ul(style = "font-size:.9rem; line-height:1.9;",
-        tags$li(tags$b("nsubj"), " — nominal subject"),
-        tags$li(tags$b("obj"), " — direct object"),
-        tags$li(tags$b("iobj"), " — indirect object"),
-        tags$li(tags$b("csubj"), " — clausal subject"),
-        tags$li(tags$b("amod"), " — adjectival modifier"),
-        tags$li(tags$b("advmod"), " — adverbial modifier"),
-        tags$li(tags$b("det"), " — determiner"),
-        tags$li(tags$b("case"), " — case marker (preposition)"),
-        tags$li(tags$b("nmod"), " — nominal modifier"),
-        tags$li(tags$b("conj"), " — conjunct"),
-        tags$li(tags$b("root"), " — root of the sentence"),
-        tags$li(tags$b("punct"), " — punctuation"),
-        tags$li(tags$b("aux"), " — auxiliary"),
-        tags$li(tags$b("cop"), " — copula (be)")
-      ),
-      tags$p(style = "color:#888; font-size:.83rem;",
-        "Full list: ",
-        tags$a("universaldependencies.org/u/dep/",
-               href = "https://universaldependencies.org/u/dep/"))
+        tags$h4(style = paste0("color:", LADAL_PURPLE, "; margin-top:20px;"),
+                "Dependency Relations (DepRel)"),
+        tags$p("Common Universal Dependencies relations:"),
+        tags$ul(style = "font-size:.9rem; line-height:1.9;",
+                tags$li(tags$b("nsubj"), " — nominal subject"),
+                tags$li(tags$b("obj"), " — direct object"),
+                tags$li(tags$b("iobj"), " — indirect object"),
+                tags$li(tags$b("csubj"), " — clausal subject"),
+                tags$li(tags$b("amod"), " — adjectival modifier"),
+                tags$li(tags$b("advmod"), " — adverbial modifier"),
+                tags$li(tags$b("det"), " — determiner"),
+                tags$li(tags$b("case"), " — case marker (preposition)"),
+                tags$li(tags$b("nmod"), " — nominal modifier"),
+                tags$li(tags$b("conj"), " — conjunct"),
+                tags$li(tags$b("root"), " — root of the sentence"),
+                tags$li(tags$b("punct"), " — punctuation"),
+                tags$li(tags$b("aux"), " — auxiliary"),
+                tags$li(tags$b("cop"), " — copula (be)")
+        ),
+        tags$p(style = "color:#888; font-size:.83rem;",
+               "Full list: ",
+               tags$a("universaldependencies.org/u/dep/",
+                      href = "https://universaldependencies.org/u/dep/"))
     )
   })
-
+  
   # ── Download buttons ────────────────────────────────────────
   output$download_buttons <- renderUI({
     if (input$run_tag == 0 || is.null(tagged()))
       return(div(style = "color:#aaa; font-size:.82rem;",
                  "Tag texts to enable downloads."))
-
+    
     tagList(
       tags$p(style = "font-size:.82rem; font-weight:600;
                        color:#444; margin-bottom:4px;",
@@ -800,7 +817,7 @@ server <- function(input, output, session) {
                      class = "ud-dl")
     )
   })
-
+  
   # ── Download: tidy table ─────────────────────────────────────
   output$dl_xlsx <- downloadHandler(
     filename = function()
@@ -808,14 +825,14 @@ server <- function(input, output, session) {
     content  = function(file)
       writexl::write_xlsx(as.data.frame(tidy_table()), file)
   )
-
+  
   output$dl_csv <- downloadHandler(
     filename = function()
       paste0("postagger_", input$language, "_", Sys.Date(), ".csv"),
     content  = function(file)
       readr::write_csv(tidy_table(), file)
   )
-
+  
   # ── Download: annotated .txt files as ZIP ───────────────────
   output$dl_txts <- downloadHandler(
     filename = function()
@@ -824,14 +841,14 @@ server <- function(input, output, session) {
       at      <- annotated_texts()
       tmp_dir <- tempfile()
       dir.create(tmp_dir)
-
+      
       txt_files <- purrr::pmap_chr(at, function(doc_id, text) {
         out_path <- file.path(tmp_dir,
                               paste0(doc_id, "_postag.txt"))
         writeLines(text, out_path)
         out_path
       })
-
+      
       zip::zip(zipfile = file,
                files   = basename(txt_files),
                root    = tmp_dir)
