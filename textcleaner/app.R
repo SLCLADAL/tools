@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 # ============================================================
-#  TextCleaner — LADAL Text Cleaning Tool (Shiny)
+#  TextCleaner - LADAL Text Cleaning Tool (Shiny)
 #  https://ladal.edu.au
 #
 #  Speed strategy:
@@ -10,14 +11,14 @@
 # ============================================================
 
 library(shiny)
-library(stringi)      # C-level ICU regex — faster than gsub/stringr
+library(stringi)      # C-level ICU regex - faster than gsub/stringr
 library(data.table)   # fast tabular state
 library(readr)        # fast file I/O
 library(zip)          # ZIP download
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  CONSTANTS
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 
 LADAL_PURPLE <- "#51247a"
 LADAL_GOLD   <- "#f0a500"
@@ -70,19 +71,19 @@ PREBUILT <- list(
   whitespace = list(
     id      = "whitespace",
     label   = "Extra whitespace  (collapses to single space)",
-    pattern = NULL,   # handled specially — always applied last
+    pattern = NULL,   # handled specially - always applied last
     desc    = "Collapses runs of spaces/tabs to one space; trims each line."
   )
 )
 
 PREBUILT_IDS <- names(PREBUILT)
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  CLEANING ENGINE
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 
 #' Apply the full cleaning pipeline to a single character string.
-#' All stringi calls are vectorised — no R-level loops.
+#' All stringi calls are vectorised - no R-level loops.
 #'
 #' @param txt         Single character string (full file content)
 #' @param selected    Character vector of PREBUILT ids to apply
@@ -91,24 +92,24 @@ PREBUILT_IDS <- names(PREBUILT)
 #' @param repl_dt     data.table with cols: find, replace, is_regex, ignore_case
 #' @return Cleaned character string
 clean_one <- function(txt, selected, lowercase, custom_pats, repl_dt) {
-
+  
   # Guard: nothing to do
   if (!nzchar(txt)) return(txt)
-
-  # ── Pre-built removals (order matters — whitespace always last) ──
+  
+  # -- Pre-built removals (order matters - whitespace always last) --
   ordered_ids <- c(
     intersect(c("tags","nonalpha","punct","numbers",
                 "urls","emails","speaker"), selected)
   )
-
+  
   for (id in ordered_ids) {
     pat <- PREBUILT[[id]]$pattern
     if (!is.null(pat)) {
       txt <- stringi::stri_replace_all_regex(txt, pat, "")
     }
   }
-
-  # ── Custom removal patterns ──────────────────────────────────
+  
+  # -- Custom removal patterns ----------------------------------
   for (pat in custom_pats) {
     pat <- trimws(pat)
     if (!nzchar(pat)) next
@@ -117,17 +118,17 @@ clean_one <- function(txt, selected, lowercase, custom_pats, repl_dt) {
       error = function(e) txt   # skip invalid regex
     )
   }
-
-  # ── Find → Replace table ─────────────────────────────────────
+  
+  # -- Find -> Replace table -------------------------------------
   if (!is.null(repl_dt) && nrow(repl_dt) > 0) {
     for (i in seq_len(nrow(repl_dt))) {
       find    <- repl_dt$find[i]
       replace <- repl_dt$replace[i]
       is_rx   <- isTRUE(repl_dt$is_regex[i])
       ic      <- isTRUE(repl_dt$ignore_case[i])
-
+      
       if (!nzchar(trimws(find))) next
-
+      
       txt <- tryCatch({
         if (is_rx) {
           stringi::stri_replace_all_regex(
@@ -143,19 +144,19 @@ clean_one <- function(txt, selected, lowercase, custom_pats, repl_dt) {
       }, error = function(e) txt)
     }
   }
-
-  # ── Lowercase ─────────────────────────────────────────────────
+  
+  # -- Lowercase -------------------------------------------------
   if (isTRUE(lowercase)) {
     txt <- stringi::stri_trans_tolower(txt)
   }
-
-  # ── Extra whitespace (always last) ───────────────────────────
+  
+  # -- Extra whitespace (always last) ---------------------------
   if ("whitespace" %in% selected) {
     txt <- stringi::stri_replace_all_regex(txt, "[ \\t]+", " ")
     txt <- stringi::stri_replace_all_regex(txt, "\\n{3,}", "\n\n")
   }
-
-  # ── Trim each line ────────────────────────────────────────────
+  
+  # -- Trim each line --------------------------------------------
   lines <- stringi::stri_split_lines(txt)[[1]]
   lines <- stringi::stri_trim_both(lines)
   stringi::stri_join(lines, collapse = "\n")
@@ -173,13 +174,13 @@ count_tokens <- function(txt) {
     stringi::stri_trim_both(txt), "\\s+")[[1]])
 }
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  UI
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 
 ui <- fluidPage(
   title = "TextCleaner | LADAL",
-
+  
   tags$head(
     tags$style(HTML(paste0("
       body{font-family:'Segoe UI',Arial,sans-serif;
@@ -305,7 +306,7 @@ ui <- fluidPage(
         display:flex;gap:18px;align-items:center;}
       .tc-footer a{color:#d4b8f5;}
     "))),
-
+    
     # JavaScript for dynamic replace table
     tags$script(HTML("
       var replRows = 0;
@@ -317,9 +318,9 @@ ui <- fluidPage(
         tr.id = 'repl_row_' + id;
         tr.innerHTML =
           '<td><input type=\"text\" id=\"repl_find_' + id + '\"' +
-          ' onchange=\"updateRepl()\" placeholder=\"find…\"></td>' +
+          ' onchange=\"updateRepl()\" placeholder=\"find...\"></td>' +
           '<td><input type=\"text\" id=\"repl_replace_' + id + '\"' +
-          ' onchange=\"updateRepl()\" placeholder=\"replace with…\"></td>' +
+          ' onchange=\"updateRepl()\" placeholder=\"replace with...\"></td>' +
           '<td style=\"text-align:center\">' +
           '<input type=\"checkbox\" id=\"repl_regex_' + id + '\"' +
           ' checked onchange=\"updateRepl()\"></td>' +
@@ -327,7 +328,7 @@ ui <- fluidPage(
           '<input type=\"checkbox\" id=\"repl_ic_' + id + '\"' +
           ' onchange=\"updateRepl()\"></td>' +
           '<td><button class=\"del-btn\" onclick=\"delRow(' + id + ')\"' +
-          ' title=\"Remove row\">✕</button></td>';
+          ' title=\"Remove row\">X</button></td>';
         document.getElementById('repl_tbody').appendChild(tr);
         updateRepl();
       }
@@ -360,135 +361,135 @@ ui <- fluidPage(
       }
     "))
   ),
-
-  # ── Banner ────────────────────────────────────────────────────
+  
+  # -- Banner ----------------------------------------------------
   div(class = "tc-banner",
-    div(style = "font-size:2rem;", "🧹"),
-    div(
-      p(class = "tc-title", "TextCleaner"),
-      p(class = "tc-sub",
-        "Remove and replace text elements · regex-powered · ",
-        tags$a("LADAL", href = "https://ladal.edu.au",
-               style = "color:#f0c060;"))
-    )
+      div(style = "font-size:2rem;", "TC"),
+      div(
+        p(class = "tc-title", "TextCleaner"),
+        p(class = "tc-sub",
+          "Remove and replace text elements | regex-powered | ",
+          tags$a("LADAL", href = "https://ladal.edu.au",
+                 style = "color:#f0c060;"))
+      )
   ),
-
-  # ── Body ──────────────────────────────────────────────────────
+  
+  # -- Body ------------------------------------------------------
   div(class = "tc-body",
-
-    # ── Sidebar ─────────────────────────────────────────────────
-    div(class = "tc-side",
-
-      # STEP 1
-      div(class = "tc-sec", "① Upload texts"),
-      div(class = "tc-info",
-          "Upload one or more ", tags$b(".txt"), " files.
+      
+      # -- Sidebar -------------------------------------------------
+      div(class = "tc-side",
+          
+          # STEP 1
+          div(class = "tc-sec", "Step 1: Upload texts"),
+          div(class = "tc-info",
+              "Upload one or more ", tags$b(".txt"), " files.
            Each file is cleaned independently."),
-      fileInput("files", NULL,
-                multiple    = TRUE,
-                accept      = ".txt",
-                buttonLabel = "📂 Choose .txt files"),
-      uiOutput("corpus_status"),
-
-      # STEP 2 — Pre-built removals
-      div(class = "tc-sec", "② Remove"),
-      div(class = "tc-info",
-          "Tick any elements to remove from all texts."),
-
-      checkboxInput("cb_tags",       PREBUILT$tags$label,       FALSE),
-      checkboxInput("cb_nonalpha",   PREBUILT$nonalpha$label,   FALSE),
-      checkboxInput("cb_punct",      PREBUILT$punct$label,      FALSE),
-      checkboxInput("cb_numbers",    PREBUILT$numbers$label,    FALSE),
-      checkboxInput("cb_urls",       PREBUILT$urls$label,       FALSE),
-      checkboxInput("cb_emails",     PREBUILT$emails$label,     FALSE),
-      checkboxInput("cb_speaker",    PREBUILT$speaker$label,    FALSE),
-      checkboxInput("cb_whitespace", PREBUILT$whitespace$label, FALSE),
-      checkboxInput("cb_lowercase",  "Convert to lowercase",    FALSE),
-
-      tags$hr(style = "border-color:#e0d8ec; margin:10px 0;"),
-
-      # Custom removal patterns
-      tags$label("Custom removal patterns (one per line, regex):"),
-      tags$textarea(
-        id          = "custom_removes",
-        class       = "form-control",
-        rows        = 3,
-        placeholder = "e.g.  <.*?>\nor  \\bACT\\s+[IVX]+\\b",
-        style       = "font-family:monospace; font-size:.82rem;"
-      ),
-
-      # STEP 3 — Replace table
-      div(class = "tc-sec", "③ Replace"),
-      div(class = "tc-info",
-          "Add find→replace pairs. Tick ", tags$b("Regex"),
-          " to use regular expressions; tick ",
-          tags$b("IC"), " for case-insensitive matching."),
-
-      div(class = "repl-wrap",
-        tags$table(class = "repl-tbl",
-          tags$thead(
-            tags$tr(
-              tags$th("Find"),
-              tags$th("Replace with"),
-              tags$th(title = "Regular expression", "Regex"),
-              tags$th(title = "Case insensitive", "IC"),
-              tags$th("")
-            )
+          fileInput("files", NULL,
+                    multiple    = TRUE,
+                    accept      = ".txt",
+                    buttonLabel = "Choose .txt files"),
+          uiOutput("corpus_status"),
+          
+          # STEP 2 - Pre-built removals
+          div(class = "tc-sec", "Step 2: Remove"),
+          div(class = "tc-info",
+              "Tick any elements to remove from all texts."),
+          
+          checkboxInput("cb_tags",       PREBUILT$tags$label,       FALSE),
+          checkboxInput("cb_nonalpha",   PREBUILT$nonalpha$label,   FALSE),
+          checkboxInput("cb_punct",      PREBUILT$punct$label,      FALSE),
+          checkboxInput("cb_numbers",    PREBUILT$numbers$label,    FALSE),
+          checkboxInput("cb_urls",       PREBUILT$urls$label,       FALSE),
+          checkboxInput("cb_emails",     PREBUILT$emails$label,     FALSE),
+          checkboxInput("cb_speaker",    PREBUILT$speaker$label,    FALSE),
+          checkboxInput("cb_whitespace", PREBUILT$whitespace$label, FALSE),
+          checkboxInput("cb_lowercase",  "Convert to lowercase",    FALSE),
+          
+          tags$hr(style = "border-color:#e0d8ec; margin:10px 0;"),
+          
+          # Custom removal patterns
+          tags$label("Custom removal patterns (one per line, regex):"),
+          tags$textarea(
+            id          = "custom_removes",
+            class       = "form-control",
+            rows        = 3,
+            placeholder = "e.g.  <.*?>\nor  \\bACT\\s+[IVX]+\\b",
+            style       = "font-family:monospace; font-size:.82rem;"
           ),
-          tags$tbody(id = "repl_tbody")
-        )
-      ),
-      tags$br(),
-      tags$button("＋ Add row", onclick = "addReplRow()",
-                  style = paste0(
-                    "background:white;border:1.5px solid ", LADAL_PURPLE, ";",
-                    "color:", LADAL_PURPLE, ";font-size:.82rem;",
-                    "font-weight:600;padding:4px 12px;border-radius:5px;",
-                    "cursor:pointer;")),
-
-      # STEP 4 — Preview & Apply
-      div(class = "tc-sec", "④ Preview & Apply"),
-      div(class = "tc-info",
-          "Preview on the first uploaded file before applying
+          
+          # STEP 3 - Replace table
+          div(class = "tc-sec", "Step 3: Replace"),
+          div(class = "tc-info",
+              "Add find->replace pairs. Tick ", tags$b("Regex"),
+              " to use regular expressions; tick ",
+              tags$b("IC"), " for case-insensitive matching."),
+          
+          div(class = "repl-wrap",
+              tags$table(class = "repl-tbl",
+                         tags$thead(
+                           tags$tr(
+                             tags$th("Find"),
+                             tags$th("Replace with"),
+                             tags$th(title = "Regular expression", "Regex"),
+                             tags$th(title = "Case insensitive", "IC"),
+                             tags$th("")
+                           )
+                         ),
+                         tags$tbody(id = "repl_tbody")
+              )
+          ),
+          tags$br(),
+          tags$button("+ Add row", onclick = "addReplRow()",
+                      style = paste0(
+                        "background:white;border:1.5px solid ", LADAL_PURPLE, ";",
+                        "color:", LADAL_PURPLE, ";font-size:.82rem;",
+                        "font-weight:600;padding:4px 12px;border-radius:5px;",
+                        "cursor:pointer;")),
+          
+          # STEP 4 - Preview & Apply
+          div(class = "tc-sec", "Step 4: Preview & Apply"),
+          div(class = "tc-info",
+              "Preview on the first uploaded file before applying
            to all files."),
-      selectInput("preview_file", "Preview file",
-                  choices = NULL),
-      actionButton("run_preview", "👁  Preview",
-                   class = "btn-default"),
-      actionButton("run_clean",   "🧹  Clean all files",
-                   class = "btn-primary"),
-
-      # STEP 5 — Download
-      div(class = "tc-sec", "⑤ Download"),
-      uiOutput("download_buttons")
-    ),
-
-    # ── Main panel ───────────────────────────────────────────────
-    div(class = "tc-main",
-      uiOutput("welcome_box"),
-      uiOutput("stats_cards"),
-      uiOutput("results_ui")
-    )
+          selectInput("preview_file", "Preview file",
+                      choices = NULL),
+          actionButton("run_preview", "Preview",
+                       class = "btn-default"),
+          actionButton("run_clean",   "Clean all files",
+                       class = "btn-primary"),
+          
+          # STEP 5 - Download
+          div(class = "tc-sec", "Step 5: Download"),
+          uiOutput("download_buttons")
+      ),
+      
+      # -- Main panel -----------------------------------------------
+      div(class = "tc-main",
+          uiOutput("welcome_box"),
+          uiOutput("stats_cards"),
+          uiOutput("results_ui")
+      )
   ),
-
-  # ── Footer ───────────────────────────────────────────────────
+  
+  # -- Footer ---------------------------------------------------
   div(class = "tc-footer",
-    span("TextCleaner · LADAL · University of Queensland"),
-    tags$a("ladal.edu.au", href = "https://ladal.edu.au"),
-    tags$a("String Processing Tutorial",
-           href = "https://ladal.edu.au/tutorials/string/string.html"),
-    tags$a("Cite this tool",
-           href = "https://ladal.edu.au/about.html#citing")
+      span("TextCleaner * LADAL * University of Queensland"),
+      tags$a("ladal.edu.au", href = "https://ladal.edu.au"),
+      tags$a("String Processing Tutorial",
+             href = "https://ladal.edu.au/tutorials/string/string.html"),
+      tags$a("Cite this tool",
+             href = "https://ladal.edu.au/about.html#citing")
   )
 )
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 #  SERVER
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 
 server <- function(input, output, session) {
-
-  # ── Raw file texts (read once, cached) ───────────────────────
+  
+  # -- Raw file texts (read once, cached) -----------------------
   raw_texts <- reactive({
     req(input$files)
     setNames(
@@ -496,29 +497,29 @@ server <- function(input, output, session) {
       input$files$name
     )
   })
-
-  # ── Update preview file dropdown ─────────────────────────────
+  
+  # -- Update preview file dropdown -----------------------------
   observe({
     req(input$files)
     updateSelectInput(session, "preview_file",
                       choices = input$files$name,
                       selected = input$files$name[1])
   })
-
-  # ── Corpus status badge ──────────────────────────────────────
+  
+  # -- Corpus status badge --------------------------------------
   output$corpus_status <- renderUI({
     if (is.null(input$files)) {
-      div(class = "tc-warn", "⚠ No files uploaded yet.")
+      div(class = "tc-warn", "No files uploaded yet.")
     } else {
       n <- nrow(input$files)
       div(class = "tc-ok",
-          paste0("✔ ", n, " file",
+          paste0(n, " file",
                  if (n > 1) "s" else "", " loaded: ",
                  paste(input$files$name, collapse = ", ")))
     }
   })
-
-  # ── Parse cleaning spec from UI inputs ───────────────────────
+  
+  # -- Parse cleaning spec from UI inputs -----------------------
   # Returns a list: selected, lowercase, custom_pats, repl_dt
   cleaning_spec <- reactive({
     selected <- character(0)
@@ -530,21 +531,21 @@ server <- function(input, output, session) {
     if (isTRUE(input$cb_emails))     selected <- c(selected, "emails")
     if (isTRUE(input$cb_speaker))    selected <- c(selected, "speaker")
     if (isTRUE(input$cb_whitespace)) selected <- c(selected, "whitespace")
-
+    
     # Custom removal patterns (one per line)
     custom_pats <- character(0)
     raw_custom <- input$custom_removes
     if (!is.null(raw_custom) && nzchar(trimws(raw_custom))) {
       custom_pats <- Filter(nzchar,
-                             trimws(strsplit(raw_custom, "\n")[[1]]))
+                            trimws(strsplit(raw_custom, "\n")[[1]]))
     }
-
+    
     # Replace table (sent from JS as encoded string)
     repl_dt <- data.table(find        = character(),
-                           replace     = character(),
-                           is_regex    = logical(),
-                           ignore_case = logical())
-
+                          replace     = character(),
+                          is_regex    = logical(),
+                          ignore_case = logical())
+    
     raw_repl <- input$repl_table_raw
     if (!is.null(raw_repl) && nzchar(raw_repl)) {
       rows <- strsplit(raw_repl, "~~~")[[1]]
@@ -562,7 +563,7 @@ server <- function(input, output, session) {
         repl_dt <- repl_dt[nzchar(trimws(find))]
       }
     }
-
+    
     list(
       selected    = selected,
       lowercase   = isTRUE(input$cb_lowercase),
@@ -570,183 +571,183 @@ server <- function(input, output, session) {
       repl_dt     = repl_dt
     )
   })
-
-  # ── Preview (single file) ─────────────────────────────────────
+  
+  # -- Preview (single file) -------------------------------------
   preview_result <- eventReactive(input$run_preview, {
     req(raw_texts(), input$preview_file)
     spec <- cleaning_spec()
     txt  <- raw_texts()[[input$preview_file]]
-
+    
     cleaned <- clean_one(txt,
-                          selected    = spec$selected,
-                          lowercase   = spec$lowercase,
-                          custom_pats = spec$custom_pats,
-                          repl_dt     = spec$repl_dt)
+                         selected    = spec$selected,
+                         lowercase   = spec$lowercase,
+                         custom_pats = spec$custom_pats,
+                         repl_dt     = spec$repl_dt)
     list(original = txt, cleaned = cleaned,
          filename = input$preview_file)
   })
-
-  # ── Clean all files ───────────────────────────────────────────
+  
+  # -- Clean all files -------------------------------------------
   cleaned_texts <- eventReactive(input$run_clean, {
     req(raw_texts())
     spec  <- cleaning_spec()
     texts <- raw_texts()
-
-    withProgress(message = "Cleaning texts…", value = 0, {
+    
+    withProgress(message = "Cleaning texts...", value = 0, {
       result <- lapply(seq_along(texts), function(i) {
         incProgress(1 / length(texts),
                     detail = paste("File", i, "of", length(texts)))
         clean_one(texts[[i]],
-                   selected    = spec$selected,
-                   lowercase   = spec$lowercase,
-                   custom_pats = spec$custom_pats,
-                   repl_dt     = spec$repl_dt)
+                  selected    = spec$selected,
+                  lowercase   = spec$lowercase,
+                  custom_pats = spec$custom_pats,
+                  repl_dt     = spec$repl_dt)
       })
     })
-
+    
     setNames(result, names(texts))
   })
-
-  # ── Welcome box ──────────────────────────────────────────────
+  
+  # -- Welcome box ----------------------------------------------
   output$welcome_box <- renderUI({
     if (input$run_preview == 0 && input$run_clean == 0) {
       div(class = "tc-info", style = "font-size:.93rem;",
-        tags$b("Welcome to TextCleaner."), br(),
-        "Upload your plain-text files, choose what to remove or
+          tags$b("Welcome to TextCleaner."), br(),
+          "Upload your plain-text files, choose what to remove or
          replace in the sidebar, then click ",
-        tags$b("Preview"), " to see the effect on one file before
+          tags$b("Preview"), " to see the effect on one file before
          clicking ", tags$b("Clean all files"), " to process
          everything.", br(), br(),
-        "Cleaned files are named ",
-        tags$code("originalname_cleaned.txt"),
-        " and can be downloaded as individual files or as a
+          "Cleaned files are named ",
+          tags$code("originalname_cleaned.txt"),
+          " and can be downloaded as individual files or as a
          single ZIP archive.", br(), br(),
-        tags$a("→ String Processing Tutorial",
-               href = "https://ladal.edu.au/tutorials/string/string.html")
+          tags$a("-> String Processing Tutorial",
+                 href = "https://ladal.edu.au/tutorials/string/string.html")
       )
     }
   })
-
-  # ── Stat cards (after cleaning) ──────────────────────────────
+  
+  # -- Stat cards (after cleaning) ------------------------------
   output$stats_cards <- renderUI({
     req(input$run_clean > 0, cleaned_texts())
     ct  <- cleaned_texts()
     rt  <- raw_texts()
-
+    
     orig_chars    <- sum(nchar(unlist(rt)))
     cleaned_chars <- sum(nchar(unlist(ct)))
     removed_chars <- orig_chars - cleaned_chars
     pct <- if (orig_chars > 0)
       round(removed_chars / orig_chars * 100, 1) else 0
-
+    
     div(class = "tc-stats",
-      div(class = "tc-card",
-        div(class = "tc-val", length(ct)),
-        div(class = "tc-lbl", "Files cleaned")),
-      div(class = "tc-card",
-        div(class = "tc-val",
-            format(orig_chars, big.mark = ",")),
-        div(class = "tc-lbl", "Original chars")),
-      div(class = "tc-card",
-        div(class = "tc-val",
-            format(cleaned_chars, big.mark = ",")),
-        div(class = "tc-lbl", "Cleaned chars")),
-      div(class = "tc-card",
-        div(class = "tc-val", paste0(pct, "%")),
-        div(class = "tc-lbl", "Chars removed"))
+        div(class = "tc-card",
+            div(class = "tc-val", length(ct)),
+            div(class = "tc-lbl", "Files cleaned")),
+        div(class = "tc-card",
+            div(class = "tc-val",
+                format(orig_chars, big.mark = ",")),
+            div(class = "tc-lbl", "Original chars")),
+        div(class = "tc-card",
+            div(class = "tc-val",
+                format(cleaned_chars, big.mark = ",")),
+            div(class = "tc-lbl", "Cleaned chars")),
+        div(class = "tc-card",
+            div(class = "tc-val", paste0(pct, "%")),
+            div(class = "tc-lbl", "Chars removed"))
     )
   })
-
-  # ── Results UI ───────────────────────────────────────────────
+  
+  # -- Results UI -----------------------------------------------
   output$results_ui <- renderUI({
     show_preview <- input$run_preview > 0
     show_clean   <- input$run_clean   > 0
-
+    
     if (!show_preview && !show_clean) return(NULL)
-
+    
     tabs <- list()
-
+    
     if (show_preview) {
       tabs <- c(tabs, list(
-        tabPanel("👁 Preview", br(), uiOutput("preview_ui"))
+        tabPanel("Preview", br(), uiOutput("preview_ui"))
       ))
     }
-
+    
     if (show_clean) {
       tabs <- c(tabs, list(
-        tabPanel("📄 Cleaned texts", br(), uiOutput("cleaned_ui")),
-        tabPanel("📊 Change summary", br(), uiOutput("summary_ui"))
+        tabPanel("Cleaned texts", br(), uiOutput("cleaned_ui")),
+        tabPanel("Change summary", br(), uiOutput("summary_ui"))
       ))
     }
-
+    
     do.call(tabsetPanel, tabs)
   })
-
-  # ── Preview panel ─────────────────────────────────────────────
+  
+  # -- Preview panel ---------------------------------------------
   output$preview_ui <- renderUI({
     req(preview_result())
     pr <- preview_result()
-
+    
     orig_prev    <- substr(pr$original, 1, 1500)
     cleaned_prev <- substr(pr$cleaned,  1, 1500)
-
+    
     if (nchar(pr$original) > 1500)
-      orig_prev    <- paste0(orig_prev, "\n…[truncated]")
+      orig_prev    <- paste0(orig_prev, "\n...[truncated]")
     if (nchar(pr$cleaned)  > 1500)
-      cleaned_prev <- paste0(cleaned_prev, "\n…[truncated]")
-
+      cleaned_prev <- paste0(cleaned_prev, "\n...[truncated]")
+    
     orig_chars    <- nchar(pr$original)
     cleaned_chars <- nchar(pr$cleaned)
     removed       <- orig_chars - cleaned_chars
     pct <- if (orig_chars > 0) round(removed / orig_chars * 100, 1) else 0
-
+    
     tagList(
       div(class = "tc-info",
-        tags$b("File: "), pr$filename, tags$br(),
-        tags$b("Original: "), format(orig_chars, big.mark = ","),
-        " chars → ",
-        tags$b("Cleaned: "), format(cleaned_chars, big.mark = ","),
-        " chars (", pct, "% removed)"
+          tags$b("File: "), pr$filename, tags$br(),
+          tags$b("Original: "), format(orig_chars, big.mark = ","),
+          " chars -> ",
+          tags$b("Cleaned: "), format(cleaned_chars, big.mark = ","),
+          " chars (", pct, "% removed)"
       ),
       fluidRow(
         column(6,
-          tags$h5(style = paste0("color:", LADAL_PURPLE,
-                                  "; font-weight:bold;"),
-                  "Original"),
-          div(class = "preview-box preview-orig", orig_prev)
+               tags$h5(style = paste0("color:", LADAL_PURPLE,
+                                      "; font-weight:bold;"),
+                       "Original"),
+               div(class = "preview-box preview-orig", orig_prev)
         ),
         column(6,
-          tags$h5(style = "color:#27ae60; font-weight:bold;",
-                  "Cleaned"),
-          div(class = "preview-box preview-clean", cleaned_prev)
+               tags$h5(style = "color:#27ae60; font-weight:bold;",
+                       "Cleaned"),
+               div(class = "preview-box preview-clean", cleaned_prev)
         )
       )
     )
   })
-
-  # ── Cleaned texts panel ───────────────────────────────────────
+  
+  # -- Cleaned texts panel ---------------------------------------
   output$cleaned_ui <- renderUI({
     req(cleaned_texts())
     ct <- cleaned_texts()
-
+    
     items <- lapply(names(ct), function(fname) {
       out_name <- paste0(tools::file_path_sans_ext(fname),
-                          "_cleaned.txt")
+                         "_cleaned.txt")
       preview  <- substr(ct[[fname]], 1, 600)
       if (nchar(ct[[fname]]) > 600)
-        preview <- paste0(preview, "\n…[truncated]")
-
+        preview <- paste0(preview, "\n...[truncated]")
+      
       tagList(
         tags$h5(style = paste0("color:", LADAL_PURPLE,
                                "; font-weight:bold;"),
-                paste0("📄 ", out_name)),
+                paste0(out_name)),
         div(class = "preview-box preview-clean",
             style = "max-height:180px;",
             preview),
         tags$hr(style = "border-color:#e0d8ec;")
       )
     })
-
+    
     tagList(
       div(class = "tc-info",
           "Previews of cleaned files (first 600 characters).
@@ -754,13 +755,13 @@ server <- function(input, output, session) {
       items
     )
   })
-
-  # ── Change summary table ──────────────────────────────────────
+  
+  # -- Change summary table --------------------------------------
   output$summary_ui <- renderUI({
     req(cleaned_texts(), raw_texts())
     ct <- cleaned_texts()
     rt <- raw_texts()
-
+    
     dt <- data.table(
       File            = names(rt),
       Orig_chars      = vapply(rt, nchar, integer(1)),
@@ -770,38 +771,38 @@ server <- function(input, output, session) {
     dt[, Pct_removed   := round(Removed_chars / Orig_chars * 100, 1)]
     dt[, Output_file   := paste0(
       tools::file_path_sans_ext(File), "_cleaned.txt")]
-
+    
     setnames(dt, c("File", "Original chars", "Cleaned chars",
-                    "Removed chars", "% removed", "Output filename"))
-
+                   "Removed chars", "% removed", "Output filename"))
+    
     DT::renderDT(
       as.data.frame(dt),
       rownames = FALSE,
       options  = list(dom = "t", pageLength = 50)
     )
   })
-
-  # ── Download buttons ─────────────────────────────────────────
+  
+  # -- Download buttons -----------------------------------------
   output$download_buttons <- renderUI({
     if (input$run_clean == 0 || is.null(cleaned_texts()))
       return(div(style = "color:#aaa; font-size:.82rem;",
                  "Clean files to enable downloads."))
-
+    
     ct <- cleaned_texts()
-
+    
     # Individual file buttons
     ind_btns <- lapply(names(ct), function(fname) {
       out_name <- paste0(tools::file_path_sans_ext(fname),
-                          "_cleaned.txt")
+                         "_cleaned.txt")
       safe_id  <- paste0("dl_", gsub("[^a-zA-Z0-9]", "_", fname))
-      downloadButton(safe_id, paste0("⬇ ", out_name),
+      downloadButton(safe_id, paste0("Download: ", out_name),
                      class = "tc-dl",
                      style = "display:block; margin-bottom:4px;
                               width:100%; text-align:left;")
     })
-
+    
     tagList(
-      downloadButton("dl_zip", "⬇ All files (.zip)",
+      downloadButton("dl_zip", "Download all files (.zip)",
                      class = "tc-dl",
                      style = "margin-bottom:10px;"),
       tags$hr(style = "border-color:#e0d8ec; margin:8px 0;"),
@@ -811,8 +812,8 @@ server <- function(input, output, session) {
       ind_btns
     )
   })
-
-  # ── ZIP download ──────────────────────────────────────────────
+  
+  # -- ZIP download ----------------------------------------------
   output$dl_zip <- downloadHandler(
     filename = function()
       paste0("textcleaner_", Sys.Date(), ".zip"),
@@ -820,32 +821,32 @@ server <- function(input, output, session) {
       ct      <- cleaned_texts()
       tmp_dir <- tempfile()
       dir.create(tmp_dir)
-
+      
       txt_files <- vapply(names(ct), function(fname) {
         out_name <- paste0(tools::file_path_sans_ext(fname),
-                            "_cleaned.txt")
+                           "_cleaned.txt")
         out_path <- file.path(tmp_dir, out_name)
         writeLines(ct[[fname]], out_path, useBytes = FALSE)
         out_path
       }, character(1))
-
+      
       zip::zip(zipfile = file,
                files   = basename(txt_files),
                root    = tmp_dir)
     }
   )
-
-  # ── Individual file downloads (generated dynamically) ─────────
+  
+  # -- Individual file downloads (generated dynamically) ---------
   observe({
     req(cleaned_texts())
     ct <- cleaned_texts()
-
+    
     lapply(names(ct), function(fname) {
       safe_id  <- paste0("dl_", gsub("[^a-zA-Z0-9]", "_", fname))
       out_name <- paste0(tools::file_path_sans_ext(fname),
-                          "_cleaned.txt")
+                         "_cleaned.txt")
       txt      <- ct[[fname]]
-
+      
       output[[safe_id]] <- downloadHandler(
         filename = function() out_name,
         content  = function(file) writeLines(txt, file)
@@ -854,6 +855,5 @@ server <- function(input, output, session) {
   })
 }
 
-# ══════════════════════════════════════════════════════════════
+# ==============================================================
 shinyApp(ui, server)
-          
