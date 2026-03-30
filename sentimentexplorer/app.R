@@ -980,9 +980,7 @@ server <- function(input, output, session) {
     div(class = "se-info", style = "font-size:.81rem;",
       "Download buttons appear on each results tab.")
   })
-}
 
-# ── Run ───────────────────────────────────────────────────────
   # ── Parameters download ─────────────────────────────────────────
   output$dl_params <- downloadHandler(
     filename = function() paste0("sentimentexplorer_params_", Sys.Date(), ".txt"),
@@ -1015,6 +1013,10 @@ server <- function(input, output, session) {
         paste0("---                  ", ""),
         paste0("Categories:          ", paste(input$categories, collapse=', ')),
     ), collapse="\n")
-  })
+  }
+
+}
+
+# ── Run ───────────────────────────────────────────────────────)
 
 shinyApp(ui, server)

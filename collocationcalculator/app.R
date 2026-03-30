@@ -886,9 +886,7 @@ server <- function(input, output, session) {
     div(class = "cc-info", style = "font-size:.81rem;",
         "Download buttons appear on each results tab.")
   })
-}
 
-# ── Run ───────────────────────────────────────────────────────
   # ── Parameters download ─────────────────────────────────────────
   output$dl_params <- downloadHandler(
     filename = function() paste0("collocationcalculator_params_", Sys.Date(), ".txt"),
@@ -929,6 +927,10 @@ server <- function(input, output, session) {
         paste0("Plot measure:        ", input$plot_measure),
         paste0("Case-insensitive:    ", as.character(isTRUE(input$ignore_case))),
     ), collapse="\n")
-  })
+  }
+
+}
+
+# ── Run ───────────────────────────────────────────────────────)
 
 shinyApp(ui, server)

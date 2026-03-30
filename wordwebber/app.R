@@ -1052,9 +1052,7 @@ server <- function(input, output, session) {
                       width = 10, height = 8, dpi = 200, bg = "white")
     }
   )
-}
 
-# ══════════════════════════════════════════════════════════════
   # ── Parameters download ─────────────────────────────────────────
   output$dl_params <- downloadHandler(
     filename = function() paste0("wordwebber_params_", Sys.Date(), ".txt"),
@@ -1097,6 +1095,10 @@ server <- function(input, output, session) {
         paste0("Stopword lang:       ", input$stopword_lang),
         paste0("Lemmatise:           ", as.character(input$lemmatise)),
     ), collapse="\n")
-  })
+  }
+
+}
+
+# ══════════════════════════════════════════════════════════════)
 
 shinyApp(ui, server)

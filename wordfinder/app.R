@@ -676,9 +676,7 @@ server <- function(input, output, session) {
     },
     content = function(file) readr::write_csv(dl_data(), file)
   )
-}
 
-# ── Run ──────────────────────────────────────────────────────────────
   # ── Parameters download ─────────────────────────────────────────
   output$dl_params <- downloadHandler(
     filename = function() paste0("wordfinder_params_", Sys.Date(), ".txt"),
@@ -715,6 +713,10 @@ server <- function(input, output, session) {
         paste0("Case-insensitive:    ", as.character(!input$ignore_case)),
         paste0("Context window:      ", paste0(input$window, ' words each side')),
     ), collapse="\n")
-  })
+  }
+
+}
+
+# ── Run ──────────────────────────────────────────────────────────────)
 
 shinyApp(ui, server)

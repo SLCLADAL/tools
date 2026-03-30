@@ -905,9 +905,7 @@ server <- function(input, output, session) {
       )
     })
   })
-}
 
-# ==============================================================
   # ── Parameters download ─────────────────────────────────────────
   output$dl_params <- downloadHandler(
     filename = function() paste0("textcleaner_params_", Sys.Date(), ".txt"),
@@ -950,6 +948,10 @@ server <- function(input, output, session) {
         paste0("Lowercase:           ", as.character(isTRUE(input$cb_lowercase))),
         paste0("Collapse spaces:     ", as.character(isTRUE(input$cb_whitespace))),
     ), collapse="\n")
-  })
+  }
+
+}
+
+# ==============================================================)
 
 shinyApp(ui, server)

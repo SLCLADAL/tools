@@ -906,9 +906,7 @@ server <- function(input, output, session) {
                root    = tmp_dir)
     }
   )
-}
 
-# ══════════════════════════════════════════════════════════════
   # ── Parameters download ─────────────────────────────────────────
   output$dl_params <- downloadHandler(
     filename = function() paste0("postagger_params_", Sys.Date(), ".txt"),
@@ -939,6 +937,10 @@ server <- function(input, output, session) {
         paste0("---                  ", ""),
         paste0("Language model:      ", input$language),
     ), collapse="\n")
-  })
+  }
+
+}
+
+# ══════════════════════════════════════════════════════════════)
 
 shinyApp(ui, server)

@@ -797,9 +797,7 @@ server <- function(input, output, session) {
              bg = "white")
     }
   )
-}
 
-# ══════════════════════════════════════════════════════════════
   # ── Parameters download ─────────────────────────────────────────
   output$dl_params <- downloadHandler(
     filename = function() paste0("keywordextractor_params_", Sys.Date(), ".txt"),
@@ -836,6 +834,10 @@ server <- function(input, output, session) {
         paste0("Top N:               ", as.character(input$top_n)),
         paste0("Target only:         ", as.character(input$only_target)),
     ), collapse="\n")
-  })
+  }
+
+}
+
+# ══════════════════════════════════════════════════════════════)
 
 shinyApp(ui, server)

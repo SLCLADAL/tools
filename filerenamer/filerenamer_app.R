@@ -814,9 +814,7 @@ server <- function(input, output, session) {
       )
     }
   )
-}
 
-# ── Run ──────────────────────────────────────────────────────────────
   # ── Parameters download ─────────────────────────────────────────
   output$dl_params <- downloadHandler(
     filename = function() paste0("filerenamer_params_", Sys.Date(), ".txt"),
@@ -861,6 +859,10 @@ server <- function(input, output, session) {
         paste0("Add prefix:          ", input$prefix),
         paste0("Add suffix:          ", input$suffix),
     ), collapse="\n")
-  })
+  }
+
+}
+
+# ── Run ──────────────────────────────────────────────────────────────)
 
 shinyApp(ui, server)

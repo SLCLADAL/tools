@@ -1064,9 +1064,7 @@ server <- function(input, output, session) {
     content  = function(file)
       readr::write_csv(seeded_result()$doc_full, file)
   )
-}
 
-# ══════════════════════════════════════════════════════════════
   # ── Parameters download ─────────────────────────────────────────
   output$dl_params <- downloadHandler(
     filename = function() paste0("topicdetector_params_", Sys.Date(), ".txt"),
@@ -1111,6 +1109,10 @@ server <- function(input, output, session) {
         paste0("Stem words:          ", as.character(isTRUE(input$stem))),
         paste0("Random seed:         ", as.character(input$lda_seed)),
     ), collapse="\n")
-  })
+  }
+
+}
+
+# ══════════════════════════════════════════════════════════════)
 
 shinyApp(ui, server)
