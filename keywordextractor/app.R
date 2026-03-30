@@ -832,9 +832,9 @@ server <- function(input, output, session) {
         paste0("Keyness measure:     ", input$measure),
         paste0("Min frequency:       ", as.character(input$min_freq)),
         paste0("Top N:               ", as.character(input$top_n)),
-        paste0("Target only:         ", as.character(input$only_target)),
+        paste0("Target only:         ", as.character(input$only_target))
     ), collapse="\n")
-  }
+  })
 
 }
 

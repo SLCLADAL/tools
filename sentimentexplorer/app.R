@@ -1011,9 +1011,9 @@ server <- function(input, output, session) {
         paste0("Lexicon:             ", "NRC Word-Emotion Association Lexicon"),
         paste0("syuzhet:             ", as.character(packageVersion('syuzhet'))),
         paste0("---                  ", ""),
-        paste0("Categories:          ", paste(input$categories, collapse=', ')),
+        paste0("Categories:          ", paste(input$categories, collapse=', '))
     ), collapse="\n")
-  }
+  })
 
 }
 

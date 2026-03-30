@@ -711,9 +711,9 @@ server <- function(input, output, session) {
         paste0("Search term:         ", input$pattern),
         paste0("Match type:          ", input$valuetype),
         paste0("Case-insensitive:    ", as.character(!input$ignore_case)),
-        paste0("Context window:      ", paste0(input$window, ' words each side')),
+        paste0("Context window:      ", paste0(input$window, ' words each side'))
     ), collapse="\n")
-  }
+  })
 
 }
 

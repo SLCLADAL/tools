@@ -946,9 +946,9 @@ server <- function(input, output, session) {
         paste0("Remove numbers:      ", as.character(isTRUE(input$cb_numbers))),
         paste0("Remove punct:        ", as.character(isTRUE(input$cb_punct))),
         paste0("Lowercase:           ", as.character(isTRUE(input$cb_lowercase))),
-        paste0("Collapse spaces:     ", as.character(isTRUE(input$cb_whitespace))),
+        paste0("Collapse spaces:     ", as.character(isTRUE(input$cb_whitespace)))
     ), collapse="\n")
-  }
+  })
 
 }
 

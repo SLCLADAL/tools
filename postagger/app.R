@@ -935,9 +935,9 @@ server <- function(input, output, session) {
         paste0("R version:           ", R.version$version.string),
         paste0("udpipe:              ", as.character(packageVersion('udpipe'))),
         paste0("---                  ", ""),
-        paste0("Language model:      ", input$language),
+        paste0("Language model:      ", input$language)
     ), collapse="\n")
-  }
+  })
 
 }
 

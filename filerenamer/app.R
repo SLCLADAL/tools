@@ -857,9 +857,9 @@ server <- function(input, output, session) {
         paste0("Change case:         ", as.character(isTRUE(input$use_case))),
         paste0("  Case type:         ", input$case_type),
         paste0("Add prefix:          ", input$prefix),
-        paste0("Add suffix:          ", input$suffix),
+        paste0("Add suffix:          ", input$suffix)
     ), collapse="\n")
-  }
+  })
 
 }
 

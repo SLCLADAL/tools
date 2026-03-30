@@ -1107,9 +1107,9 @@ server <- function(input, output, session) {
         paste0("Min doc freq:        ", as.character(input$min_docfreq)),
         paste0("Stopword lang:       ", input$stopword_lang),
         paste0("Stem words:          ", as.character(isTRUE(input$stem))),
-        paste0("Random seed:         ", as.character(input$lda_seed)),
+        paste0("Random seed:         ", as.character(input$lda_seed))
     ), collapse="\n")
-  }
+  })
 
 }
 

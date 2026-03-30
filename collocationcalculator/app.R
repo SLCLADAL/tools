@@ -925,9 +925,9 @@ server <- function(input, output, session) {
         paste0("Min frequency:       ", as.character(input$min_freq)),
         paste0("Top N:               ", as.character(input$top_n)),
         paste0("Plot measure:        ", input$plot_measure),
-        paste0("Case-insensitive:    ", as.character(isTRUE(input$ignore_case))),
+        paste0("Case-insensitive:    ", as.character(isTRUE(input$ignore_case)))
     ), collapse="\n")
-  }
+  })
 
 }
 

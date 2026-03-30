@@ -1093,9 +1093,9 @@ server <- function(input, output, session) {
         paste0("Min MI:              ", as.character(input$min_mi)),
         paste0("Top N:               ", as.character(input$top_n)),
         paste0("Stopword lang:       ", input$stopword_lang),
-        paste0("Lemmatise:           ", as.character(input$lemmatise)),
+        paste0("Lemmatise:           ", as.character(input$lemmatise))
     ), collapse="\n")
-  }
+  })
 
 }
 
