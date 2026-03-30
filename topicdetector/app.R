@@ -436,7 +436,8 @@ ui <- fluidPage(
            href = "https://ladal.edu.au/tutorials/topicmodels/topicmodels.html"),
     tags$a("Cite this tool",
            href = "https://ladal.edu.au/about.html#citing")
-  )
+  ),
+  CITATION_FOOTER
 )
 
 # ══════════════════════════════════════════════════════════════
@@ -737,7 +738,16 @@ server <- function(input, output, session) {
                            max(300, 40 + n_docs * 14), "px")),
               br(),
               uiOutput("heatmap_dl")
-            )
+            ),
+        tabPanel(
+          "⚙️ Parameters",
+          br(),
+          p(style="font-size:.85rem;color:#555;",
+            "Download a record of all parameters used for reproducibility."),
+          uiOutput("params_dl_ui"),
+          br(),
+          verbatimTextOutput("params_preview")
+        )
           )
         )
       }
@@ -1015,4 +1025,92 @@ server <- function(input, output, session) {
 }
 
 # ══════════════════════════════════════════════════════════════
+  # ── Parameters download ─────────────────────────────────────────
+  output$dl_params <- downloadHandler(
+    filename = function() paste0("topicdetector_params_", Sys.Date(), ".txt"),
+    content  = function(file) {
+      lines <- c(
+        paste0("Tool:                ", "TopicDetector — LDA Topic Modelling"),
+        paste0("Date:                ", as.character(Sys.time())),
+        paste0("R version:           ", R.version$version.string),
+        paste0("topicmodels:         ", as.character(packageVersion('topicmodels'))),
+        paste0("seededlda:           ", as.character(packageVersion('seededlda'))),
+        paste0("---                  ", ""),
+        paste0("Number of topics:    ", as.character(input$k_unsup)),
+        paste0("Top terms shown:     ", as.character(input$n_top_terms)),
+        paste0("Min term freq:       ", as.character(input$min_termfreq)),
+        paste0("Min doc freq:        ", as.character(input$min_docfreq)),
+        paste0("Stopword lang:       ", input$stopword_lang),
+        paste0("Stem words:          ", as.character(isTRUE(input$stem))),
+        paste0("Random seed:         ", as.character(input$lda_seed)),
+        paste0("Files:               ", if (!is.null(input$files)) paste(input$files$name, collapse=", ") else "none")
+      )
+      writeLines(lines, file)
+    }
+  )
+
+  output$params_dl_ui <- renderUI({
+    downloadButton("dl_params", "⬇ Download parameters (.txt)", class = "td-dl")
+  })
+
+  output$params_preview <- renderText({
+    paste(c(
+        paste0("Tool:                ", "TopicDetector — LDA Topic Modelling"),
+        paste0("Date:                ", as.character(Sys.time())),
+        paste0("R version:           ", R.version$version.string),
+        paste0("topicmodels:         ", as.character(packageVersion('topicmodels'))),
+        paste0("seededlda:           ", as.character(packageVersion('seededlda'))),
+        paste0("---                  ", ""),
+        paste0("Number of topics:    ", as.character(input$k_unsup)),
+        paste0("Top terms shown:     ", as.character(input$n_top_terms)),
+        paste0("Min term freq:       ", as.character(input$min_termfreq)),
+        paste0("Min doc freq:        ", as.character(input$min_docfreq)),
+        paste0("Stopword lang:       ", input$stopword_lang),
+        paste0("Stem words:          ", as.character(isTRUE(input$stem))),
+        paste0("Random seed:         ", as.character(input$lda_seed)),
+    ), collapse="\n")
+  })
+
+# ── Citation footer ─────────────────────────────────────────────────
+CITATION_FOOTER <- tags$div(
+  style = paste0(
+    "border-top:2px solid #e0d4f0;margin-top:28px;padding:20px 28px 16px 28px;",
+    "background:#faf7fd;font-family:sans-serif;font-size:.82rem;color:#555;"
+  ),
+  tags$div(
+    style = "display:flex;align-items:center;gap:14px;margin-bottom:10px;",
+    tags$span(style = "font-size:1rem;font-weight:700;color:#51247a;",
+              "How to cite this tool"),
+    tags$a("→ Tutorial", href = "https://ladal.edu.au/tutorials/topicmodels/topicmodels.html", target = "_blank",
+           style = "font-size:.78rem;color:#51247a;")
+  ),
+  tags$blockquote(
+    style = "border-left:3px solid #c8b8de;padding-left:12px;margin:0 0 10px 0;color:#444;",
+    HTML(paste0(
+      "Schweinberger, Martin. (2025). ",
+      "<em>TopicDetector: A browser-based LDA topic modelling tool</em>. ",
+      "Brisbane: The University of Queensland. ",
+      "Language Technology and Data Analysis Laboratory (LADAL). ",
+      "Retrieved from https://ladal.edu.au/tools.html"
+    ))
+  ),
+  tags$details(
+    tags$summary(style = "cursor:pointer;color:#51247a;font-weight:600;font-size:.8rem;",
+                 "BibTeX"),
+    tags$pre(
+      style = paste0("background:#ece8f5;border-radius:5px;padding:10px;",
+                     "font-size:.75rem;overflow-x:auto;margin-top:6px;"),
+      paste0(
+        "@misc{schweinberger2025topicdetector,\n",
+        "  author       = {Schweinberger, Martin},\n",
+        "  title        = {TopicDetector: A browser-based LDA topic modelling tool},\n",
+        "  year         = {2025},\n",
+        "  organization = {The University of Queensland},\n",
+        "  url          = {https://ladal.edu.au/tools.html}\n",
+        "}"
+      )
+    )
+  )
+)
+
 shinyApp(ui, server)

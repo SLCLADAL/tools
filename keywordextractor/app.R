@@ -390,7 +390,8 @@ ui <- fluidPage(
            href = "https://ladal.edu.au/tutorials/key/key.html"),
     tags$a("Cite this tool",
            href = "https://ladal.edu.au/about.html#citing")
-  )
+  ),
+  CITATION_FOOTER
 )
 
 # ══════════════════════════════════════════════════════════════
@@ -514,7 +515,16 @@ server <- function(input, output, session) {
     tabsetPanel(
       tabPanel("📊 Chart", br(), plotOutput("key_plot", height = "480px")),
       tabPanel("📋 Full table", br(), DTOutput("key_table")),
-      tabPanel("ℹ️ Measure guide", br(), uiOutput("measure_guide"))
+      tabPanel("ℹ️ Measure guide", br(), uiOutput("measure_guide")),
+        tabPanel(
+          "⚙️ Parameters",
+          br(),
+          p(style="font-size:.85rem;color:#555;",
+            "Download a record of all parameters used for reproducibility."),
+          uiOutput("params_dl_ui"),
+          br(),
+          verbatimTextOutput("params_preview")
+        )
     )
   })
 
@@ -748,4 +758,84 @@ server <- function(input, output, session) {
 }
 
 # ══════════════════════════════════════════════════════════════
+  # ── Parameters download ─────────────────────────────────────────
+  output$dl_params <- downloadHandler(
+    filename = function() paste0("keywordextractor_params_", Sys.Date(), ".txt"),
+    content  = function(file) {
+      lines <- c(
+        paste0("Tool:                ", "KeywordExtractor — Keyness Analysis"),
+        paste0("Date:                ", as.character(Sys.time())),
+        paste0("R version:           ", R.version$version.string),
+        paste0("quanteda.textstats:  ", as.character(packageVersion('quanteda.textstats'))),
+        paste0("---                  ", ""),
+        paste0("Keyness measure:     ", input$measure),
+        paste0("Min frequency:       ", as.character(input$min_freq)),
+        paste0("Top N:               ", as.character(input$top_n)),
+        paste0("Target only:         ", as.character(input$only_target)),
+        paste0("Files:               ", if (!is.null(input$files)) paste(input$files$name, collapse=", ") else "none")
+      )
+      writeLines(lines, file)
+    }
+  )
+
+  output$params_dl_ui <- renderUI({
+    downloadButton("dl_params", "⬇ Download parameters (.txt)", class = "ke-dl")
+  })
+
+  output$params_preview <- renderText({
+    paste(c(
+        paste0("Tool:                ", "KeywordExtractor — Keyness Analysis"),
+        paste0("Date:                ", as.character(Sys.time())),
+        paste0("R version:           ", R.version$version.string),
+        paste0("quanteda.textstats:  ", as.character(packageVersion('quanteda.textstats'))),
+        paste0("---                  ", ""),
+        paste0("Keyness measure:     ", input$measure),
+        paste0("Min frequency:       ", as.character(input$min_freq)),
+        paste0("Top N:               ", as.character(input$top_n)),
+        paste0("Target only:         ", as.character(input$only_target)),
+    ), collapse="\n")
+  })
+
+# ── Citation footer ─────────────────────────────────────────────────
+CITATION_FOOTER <- tags$div(
+  style = paste0(
+    "border-top:2px solid #e0d4f0;margin-top:28px;padding:20px 28px 16px 28px;",
+    "background:#faf7fd;font-family:sans-serif;font-size:.82rem;color:#555;"
+  ),
+  tags$div(
+    style = "display:flex;align-items:center;gap:14px;margin-bottom:10px;",
+    tags$span(style = "font-size:1rem;font-weight:700;color:#51247a;",
+              "How to cite this tool"),
+    tags$a("→ Tutorial", href = "https://ladal.edu.au/tutorials/key/key.html", target = "_blank",
+           style = "font-size:.78rem;color:#51247a;")
+  ),
+  tags$blockquote(
+    style = "border-left:3px solid #c8b8de;padding-left:12px;margin:0 0 10px 0;color:#444;",
+    HTML(paste0(
+      "Schweinberger, Martin. (2025). ",
+      "<em>KeywordExtractor: A browser-based keyword analysis tool</em>. ",
+      "Brisbane: The University of Queensland. ",
+      "Language Technology and Data Analysis Laboratory (LADAL). ",
+      "Retrieved from https://ladal.edu.au/tools.html"
+    ))
+  ),
+  tags$details(
+    tags$summary(style = "cursor:pointer;color:#51247a;font-weight:600;font-size:.8rem;",
+                 "BibTeX"),
+    tags$pre(
+      style = paste0("background:#ece8f5;border-radius:5px;padding:10px;",
+                     "font-size:.75rem;overflow-x:auto;margin-top:6px;"),
+      paste0(
+        "@misc{schweinberger2025keywordextractor,\n",
+        "  author       = {Schweinberger, Martin},\n",
+        "  title        = {KeywordExtractor: A browser-based keyword analysis tool},\n",
+        "  year         = {2025},\n",
+        "  organization = {The University of Queensland},\n",
+        "  url          = {https://ladal.edu.au/tools.html}\n",
+        "}"
+      )
+    )
+  )
+)
+
 shinyApp(ui, server)
