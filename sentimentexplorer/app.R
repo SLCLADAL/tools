@@ -892,7 +892,7 @@ server <- function(input, output, session) {
     ) |>
     formatStyle("Section",
                 color = LADAL_PURPLE, fontWeight = "bold") |>
-    formatStyle(grep("\\(%\\)$", names(df), value = TRUE),
+    formatStyle(grep("[(][%][)]$", names(df), value = TRUE),
                 color = "#555")
   })
 

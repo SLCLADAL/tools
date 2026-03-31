@@ -53,19 +53,19 @@ PREBUILT <- list(
   urls = list(
     id      = "urls",
     label   = "URLs  (e.g. https://example.com)",
-    pattern = "https?://\\S+|www\\.\\S+",
+    pattern = "https?://\\S+|www[.]\\S+",
     desc    = "Removes http://, https://, and www. URLs."
   ),
   emails = list(
     id      = "emails",
     label   = "Email addresses  (e.g. user@example.com)",
-    pattern = "[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}",
+    pattern = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}",
     desc    = "Removes email addresses."
   ),
   speaker = list(
     id      = "speaker",
     label   = "Speaker labels  (e.g. [SPEAKER_A]:, <S1A-001$A>)",
-    pattern = "(\\[[A-Z0-9_]+\\]\\s*:?|<[A-Z0-9$_\\-]+>\\s*(<#>\\s*)?)",
+    pattern = "(\\[[A-Z0-9_]+\\]\\s*:?|<[A-Z0-9$_-]+>\\s*(<#>\\s*)?)",
     desc    = "Removes common spoken corpus speaker turn labels."
   ),
   whitespace = list(

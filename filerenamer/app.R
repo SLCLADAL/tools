@@ -98,7 +98,7 @@ build_new_names <- function(original_names, ops) {
   }
 
   # Sanitise: illegal file-system characters → underscore
-  new_stems <- stri_replace_all_regex(new_stems, '[\\\\/:*?"<>|]', "_")
+  new_stems <- stri_replace_all_regex(new_stems, '[\\/:*?"<>|]', "_")
   # Collapse multiple consecutive separators left by removals
   new_stems <- stri_replace_all_regex(new_stems, "[ _-]{2,}", "_")
   # Strip leading / trailing separators

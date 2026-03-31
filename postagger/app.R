@@ -170,7 +170,7 @@ find_model_file <- function(language) {
     if (!dir.exists(d)) next
     # Match "english-ewt-ud-2.5-191206.udpipe" style filenames
     candidates <- list.files(d,
-                             pattern     = paste0("^", language, ".*\.udpipe$"),
+                             pattern     = paste0("^", language, ".*[.]udpipe$"),
                              full.names  = TRUE,
                              ignore.case = TRUE)
     if (length(candidates) > 0) {
