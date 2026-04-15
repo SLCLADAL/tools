@@ -21,7 +21,8 @@ LADAL_PURPLE <- "#51247a"
 LADAL_GOLD   <- "#f0a500"
 
 # Model directory — pre-bundled models live here inside Binder.
-# postBuild downloads to ~/udpipe-models (i.e. /home/jovyan/udpipe-models).
+# install.R (tools-env) downloads models to ~/udpipe-models at image build time.
+# ARDC Binder blocks outbound internet at runtime, so models MUST be baked in.
 # Resolve HOME explicitly — path.expand() can fail in some Binder envs.
 .home <- Sys.getenv("HOME", unset = "/home/jovyan")
 MODEL_DIRS <- c(
@@ -324,6 +325,40 @@ CITATION_FOOTER <- tags$div(
   )
 )
 
+ARDC_FUNDING_BANNER <- div(
+  style = paste0(
+    "border-top:3px solid ", LADAL_GOLD, ";",
+    "padding:18px 28px 14px 28px;background:#fffdf5;",
+    "font-family:sans-serif;font-size:.82rem;color:#555;"
+  ),
+  class = "ardc-funding-banner",
+  div(
+    style = "display:flex;align-items:center;gap:20px;flex-wrap:wrap;",
+    div(
+      style = "flex:1;min-width:280px;",
+      tags$p(
+        style = "margin:0 0 4px 0;",
+        "This tool was developed by ",
+        tags$a("LADAL", href = "https://ladal.edu.au", target = "_blank"),
+        " at the University of Queensland as part of the ",
+        tags$a("Language Data Commons of Australia (LDaCA)",
+               href = "https://www.ldaca.edu.au", target = "_blank"),
+        ". LDaCA is funded by the ",
+        tags$a("Australian Research Data Commons (ARDC)",
+               href = "https://ardc.edu.au", target = "_blank"),
+        " through NCRIS."
+      )
+    ),
+    div(
+      style = "display:flex;align-items:center;gap:14px;",
+      tags$img(src = "LDaCAlogo.png",       height = "45px",
+               alt = "LDaCA logo",           style = "vertical-align:middle;"),
+      tags$img(src = "AcknowledgeARDC.png", height = "45px",
+               alt = "Acknowledge ARDC logo", style = "vertical-align:middle;")
+    )
+  )
+)
+
 ui <- fluidPage(
   title = "POSTagger | LADAL",
   
@@ -536,7 +571,8 @@ ui <- fluidPage(
       tags$a("Cite this tool",
              href = "https://ladal.edu.au/about.html#citing")
   ),
-  CITATION_FOOTER
+  CITATION_FOOTER,
+  ARDC_FUNDING_BANNER
 )
 
 # ══════════════════════════════════════════════════════════════
@@ -562,14 +598,24 @@ server <- function(input, output, session) {
   # ── Model status badge ───────────────────────────────────────
   output$model_status <- renderUI({
     lang <- input$language
-    # Check whether the model file is already on disk
+    # Only show green if the .udpipe file is actually present on disk.
+    # BUNDLED_MODELS are only guaranteed available after a full image rebuild
+    # that includes the udpipe download block in tools-env/install.R.
     model_file <- find_model_file(lang)
-    if (!is.null(model_file) || lang %in% BUNDLED_MODELS) {
+    if (!is.null(model_file)) {
       div(class = "ud-ok",
-          "✔ Pre-loaded model — starts instantly")
+          "✔ Model file found — starts instantly")
+    } else if (lang %in% BUNDLED_MODELS) {
+      div(class = "ud-warn",
+          paste0("⚠ '", lang, "' is a bundled model but its file was not found on disk. ",
+                 "The Binder image may need a rebuild (tools-env/install.R). ",
+                 "Tagging will attempt an on-demand download — ",
+                 "this will fail on ARDC Binder where outbound internet is blocked."))
     } else {
       div(class = "ud-warn",
-          "⏳ This model will be downloaded on first use (~10–30s)")
+          "⏳ This model will be downloaded on first use (~10–30s). ",
+          tags$b("Not available on ARDC Binder"),
+          " — use MyBinder or GESIS instead.")
     }
   })
   
@@ -941,6 +987,6 @@ server <- function(input, output, session) {
 
 }
 
-# ══════════════════════════════════════════════════════════════)
+# ══════════════════════════════════════════════════════════════
 
 shinyApp(ui, server)
