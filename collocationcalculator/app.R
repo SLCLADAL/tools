@@ -220,7 +220,7 @@ CITATION_FOOTER <- tags$div(
   tags$blockquote(
     style = "border-left:3px solid #c8b8de;padding-left:12px;margin:0 0 10px 0;color:#444;",
     HTML(paste0(
-      "Schweinberger, Martin. (2025). ",
+      "Schweinberger, Martin. (2026). ",
       "<em>CollocationCalculator: A browser-based collocation analysis tool</em>. ",
       "Brisbane: The University of Queensland. ",
       "Language Technology and Data Analysis Laboratory (LADAL). ",
@@ -234,10 +234,10 @@ CITATION_FOOTER <- tags$div(
       style = paste0("background:#ece8f5;border-radius:5px;padding:10px;",
                      "font-size:.75rem;overflow-x:auto;margin-top:6px;"),
       paste0(
-        "@misc{schweinberger2025collocationcalculator,\n",
+        "@misc{schweinberger2026collocationcalculator,\n",
         "  author       = {Schweinberger, Martin},\n",
         "  title        = {CollocationCalculator: A browser-based collocation analysis tool},\n",
-        "  year         = {2025},\n",
+        "  year         = {2026},\n",
         "  organization = {The University of Queensland},\n",
         "  url          = {https://ladal.edu.au/tools.html}\n",
         "}"
