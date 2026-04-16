@@ -150,16 +150,23 @@ run_seeded_lda <- function(clean_dfm, dict, min_termfreq,
   top_df   <- as.data.frame(top_mat, stringsAsFactors = FALSE)
   colnames(top_df) <- colnames(top_mat)
 
-  # Document-topic assignments + probabilities
-  theta    <- seededlda::topics(model, type = "prob")   # doc × topic probs
-  best_top <- seededlda::topics(model)                  # named vector
+  # Document-topic assignments + probabilities.
+  # seededlda stores the doc-topic probability matrix as model$theta directly.
+  # seededlda::topics() only returns the MAP topic label (no type argument).
+  theta    <- model$theta                # doc × topic probability matrix
+  best_top <- seededlda::topics(model)  # named character vector of best topics
+
+  # Use names from best_top as the authoritative document IDs
+  doc_names <- names(best_top)
+  if (is.null(doc_names)) doc_names <- rownames(theta)
+  if (is.null(doc_names)) doc_names <- paste0("doc", seq_len(nrow(theta)))
 
   doc_df <- tibble::tibble(
-    Document  = rownames(theta),
+    Document  = doc_names,
     BestTopic = as.character(best_top)
   )
   prob_df <- as.data.frame(theta, stringsAsFactors = FALSE)
-  prob_df$Document <- rownames(theta)
+  prob_df$Document <- doc_names
   doc_full <- dplyr::left_join(doc_df, prob_df, by = "Document") |>
     dplyr::relocate(Document, BestTopic)
 
@@ -707,10 +714,13 @@ server <- function(input, output, session) {
           DTOutput("unsup_terms_dt"),
           br(),
           div(class = "td-info",
-            "👆 These top terms have been used to pre-fill the
-             seed dictionary in the sidebar. Edit the topic names
-             and seed words, then click ",
-            tags$b("Run seeded LDA"), ".")
+            "👆 These top terms have been used to pre-fill the seed
+             dictionary in the ", tags$b("sidebar (left panel)"), ". ",
+            "Scroll up in the sidebar to find the ",
+            tags$b("② Seed dictionary"), " section — edit the topic
+             names and seed words there, then click ",
+            tags$b("▶ Run seeded LDA"), " to proceed to Stage 2."
+          )
         )
       }
       panels <- c(panels, list(stage1_content))
@@ -1113,6 +1123,6 @@ server <- function(input, output, session) {
 
 }
 
-# ══════════════════════════════════════════════════════════════)
+# ══════════════════════════════════════════════════════════════
 
 shinyApp(ui, server)
