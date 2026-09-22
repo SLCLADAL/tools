@@ -1,0 +1,69 @@
+{
+  "title": "WordFinder: A Browser-Based KWIC Concordancer for Corpus Analysis",
+  "description": "WordFinder is a browser-based Shiny application that produces Key-Word-in-Context (KWIC) concordances for uploaded plain-text files. Users can search for single words or multi-word patterns, sort concordance lines by left or right context, and export the resulting concordance table as CSV or Excel. Search is regex-aware and supports case-insensitive matching. WordFinder is designed for teaching and research in corpus linguistics, sociolinguistics, and the digital humanities, and requires no local installation of R.",
+  "creators": [
+    {
+      "name": "Schweinberger, Martin",
+      "orcid": "0000-0003-1923-9153",
+      "affiliation": "Language Technology and Data Analysis Laboratory (LADAL), The University of Queensland"
+    }
+  ],
+  "upload_type": "software",
+  "license": "MIT",
+  "version": "1.0.0",
+  "publication_date": "2026-09-22",
+  "keywords": [
+    "corpus linguistics",
+    "text analysis",
+    "computational linguistics",
+    "digital humanities",
+    "LADAL",
+    "concordancing",
+    "KWIC",
+    "keyword in context",
+    "corpus search",
+    "R",
+    "Shiny"
+  ],
+  "communities": [
+    {
+      "identifier": "ladal"
+    }
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/SLCLADAL/tools/tree/main/wordfinder",
+      "relation": "isSupplementTo",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://ladal.edu.au/tools.html",
+      "relation": "isDocumentedBy",
+      "resource_type": "publication-other"
+    },
+    {
+      "identifier": "https://ladal.edu.au/tutorials/concordancing/concordancing.html",
+      "relation": "isDocumentedBy",
+      "resource_type": "publication-other"
+    },
+    {
+      "identifier": "10.3565/kq2v-9g52",
+      "relation": "isPartOf",
+      "resource_type": "publication-other",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "10.47486/HIR001",
+      "relation": "isPartOf",
+      "resource_type": "publication-other",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "{{PAIRED_CONCEPT_DOI}}",
+      "relation": "isSimilarTo",
+      "resource_type": "software",
+      "scheme": "doi"
+    }
+  ],
+  "notes": "Part of the LADAL Tools suite. See https://ladal.edu.au/tools.html for the full catalogue. Reserve DOI on Zenodo, then substitute 10.5281/zenodo.22890722 and (if applicable) {{PAIRED_CONCEPT_DOI}} in this file before publishing."
+}

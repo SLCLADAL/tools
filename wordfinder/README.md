@@ -1,126 +1,57 @@
-# WordFinder - LADAL Keyword-in-Context Concordancing Tool
+# WordFinder: A Browser-Based KWIC Concordancer for Corpus Analysis
 
-## About
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22890722.svg)](https://doi.org/10.5281/zenodo.22890722)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**WordFinder** is a browser-based concordancing tool developed by the [Language Technology and Data Analysis Laboratory (LADAL)](https://ladal.edu.au) at the University of Queensland. It allows researchers to search for words and phrases across a collection of plain-text files and explore the results as keyword-in-context (KWIC) concordance lines — with no R knowledge or software installation required.
+WordFinder is a browser-based Shiny application that produces Key-Word-in-Context (KWIC) concordances for uploaded plain-text files. Users can search for single words or multi-word patterns, sort concordance lines by left or right context, and export the resulting concordance table as CSV or Excel. Search is regex-aware and supports case-insensitive matching. WordFinder is designed for teaching and research in corpus linguistics, sociolinguistics, and the digital humanities, and requires no local installation of R.
 
-The tool is built with [Shiny](https://shiny.posit.co/) and runs entirely in the browser via [Binder](https://mybinder.org/). All processing happens on the server; no data is stored.
-
-::: {.callout-note}
-This tool accompanies the LADAL tutorial [**Finding Words in Text: Concordancing with R**](https://ladal.edu.au/tutorials/kwics/kwics.html), which explains the methodology in depth and provides reusable R code for more advanced workflows.
-:::
-
----
-
-## How to use
-
-1. **Launch** the tool using one of the Binder links below.
-2. **Upload** one or more `.txt` files using the *Upload texts* panel on the left. Each file becomes one document in the concordance.
-3. **Enter a search term** — a single word, a phrase, or a regular expression.
-4. **Configure** the context window, match type, and case sensitivity as needed.
-5. **Click Search** to run the concordance.
-6. **Explore** results in the interactive table (sort, filter, paginate).
-7. **Download** the full results as Excel or CSV.
-
----
-
-## Features
-
-- Upload multiple `.txt` files (one file = one document in the concordance)
-- Three match types via `quanteda::kwic()`:
-  - **Fixed** — exact string matching
-  - **Glob** — wildcard patterns (e.g. `wom*n`)
-  - **Regex** — full regular expressions (e.g. `wom[ae]n`)
-- Adjustable context window (1–15 words each side of the keyword)
-- Case-sensitive or case-insensitive search
-- Interactive concordance table with per-column filters, sorting, and pagination
-- Keyword highlighted in purple for easy scanning
-- Per-document frequency summary with normalised hits per 1,000 tokens
-- Multi-pattern search (run several patterns at once and compare hit counts)
-- Download results as **Excel** (`.xlsx`) or **CSV**
-
----
+Part of the [LADAL Tools](https://ladal.edu.au/tools.html) suite developed at
+the Language Technology and Data Analysis Laboratory (LADAL), The University
+of Queensland.
 
 ## Launch
 
-::: {.callout-tip}
-## Which link should I use?
+Launch in your browser: [https://binderhub.rc.nectar.org.au/v2/gh/SLCLADAL/tools-env/…](https://binderhub.rc.nectar.org.au/v2/gh/SLCLADAL/tools-env/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FSLCLADAL%252Ftools%26urlpath%3Dvoila%252Frender%252Ftools%252Fwordfinder_launcher.ipynb%26branch%3Dmain)
 
-Use **ARDC BinderHub** if you have an Australian or New Zealand research institution login (AAF or Tuakiri). It offers more computing resources and faster load times.
+**Access:** ARDC BinderHub. Requires AAF (Australian) or Tuakiri (New Zealand) institutional login.
 
-Use **MyBinder.org** if you do not have AAF/Tuakiri access. It is free and open to everyone but may occasionally be slower.
-:::
+## Related tutorial
 
-**ARDC BinderHub** *(recommended — requires AAF / Tuakiri login)*
-
-```
-https://binderhub.atap-binder.cloud.edu.au/v2/gh/SLCLADAL/interactive-notebooks-environment/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FSLCLADAL%252Ftools%26urlpath%3Dshiny%252Ftree%252Ftools%252Fwordfinder%252F%26branch%3Dmain
-```
-
-**MyBinder.org** *(open access — no login required)*
-
-```
-https://mybinder.org/v2/gh/SLCLADAL/interactive-notebooks-environment/main?urlpath=git-pull%3Frepo%3Dhttps%253A%252F%252Fgithub.com%252FSLCLADAL%252Ftools%26urlpath%3Dshiny%252Ftree%252Ftools%252Fwordfinder%252F%26branch%3Dmain
-```
-
----
-
-## Input format
-
-WordFinder accepts **plain-text files only** (`.txt`). Files should be:
-
-- Saved with UTF-8 encoding where possible
-- Unformatted (no Word `.docx`, no PDF, no HTML)
-- One file per document — the filename becomes the document label in the results
-
-There is no enforced size limit, but very large files (> 5 MB each) may slow the search. For very large corpora, consider splitting files or running the analysis locally in R using the [concordancing tutorial](https://ladal.edu.au/tutorials/kwics/kwics.html).
-
----
-
-## Dependencies
-
-All packages are pre-installed in the [LADAL interactive notebooks environment](https://github.com/SLCLADAL/interactive-notebooks-environment):
-
-| Package | Purpose |
-|---|---|
-| `shiny` | Web application framework |
-| `quanteda` | Tokenisation and KWIC extraction |
-| `tidyverse` | Data manipulation and CSV export |
-| `writexl` | Excel export |
-| `DT` | Interactive results table |
-
----
-
-## Related tools and tutorials
-
-- [**KeywordExtractor**](../keywordextractor/README.html) — identify vocabulary that is statistically distinctive in your texts compared to a reference corpus
-- [**Concordancing with R** (tutorial)](https://ladal.edu.au/tutorials/kwics/kwics.html) — full methodology with reusable R code
-- [All LADAL tools](https://ladal.edu.au/tools.html)
-
----
+[Concordancing Tutorial](https://ladal.edu.au/tutorials/concordancing/concordancing.html) on the LADAL website.
 
 ## Citation
 
-Schweinberger, Martin. (2025). *WordFinder: LADAL Concordancing Tool*. Brisbane: The University of Queensland. <https://ladal.edu.au/tools.html>
+Schweinberger, Martin. (2026). *WordFinder: A Browser-Based KWIC Concordancer for Corpus Analysis* (Version 1.0.0)
+[Computer software]. Zenodo. https://doi.org/10.5281/zenodo.22890722
+
+### BibTeX
 
 ```bibtex
-@misc{schweinberger2025wordfinder,
+@software{schweinberger_2026_wordfinder,
   author       = {Schweinberger, Martin},
-  title        = {{WordFinder}: {LADAL} Concordancing Tool},
-  year         = {2025},
-  organization = {The University of Queensland,
-                  School of Languages and Cultures},
-  address      = {Brisbane},
-  url          = {https://ladal.edu.au/tools.html}
+  title        = {{WordFinder: A Browser-Based KWIC Concordancer for Corpus Analysis}},
+  year         = {2026},
+  month        = sep,
+  publisher    = {Zenodo},
+  version      = {1.0.0},
+  doi          = {10.5281/zenodo.22890722},
+  url          = {https://doi.org/10.5281/zenodo.22890722}
 }
 ```
 
----
+## License
 
-## Reporting issues
+MIT — see [`LICENSE`](LICENSE).
 
-If the tool fails to launch or produces unexpected results, please email [m.schweinberger@uq.edu.au](mailto:m.schweinberger@uq.edu.au) with the tool name, which Binder link you used, and a brief description of the problem.
+## Acknowledgement
 
----
+This tool was developed by LADAL at the University of Queensland as part of
+the Language Data Commons of Australia
+([LDaCA](https://doi.org/10.3565/kq2v-9g52)). LDaCA is a co-investment partnership
+with the Australian Research Data Commons (ARDC) through the HASS and
+Indigenous Research Data Commons. ARDC is enabled by the Australian
+Government's National Collaborative Research Infrastructure Strategy (NCRIS).
 
-*Part of [LDaCA](https://ldaca.edu.au) · [ARDC](https://ardc.edu.au) · [NCRIS](https://www.education.gov.au/ncris) · [University of Queensland](https://www.uq.edu.au)*
+## Repository
+
+Source: <https://github.com/SLCLADAL/tools/tree/main/wordfinder>

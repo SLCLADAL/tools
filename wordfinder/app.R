@@ -44,42 +44,42 @@ parse_patterns <- function(raw) {
 
 # ── Citation footer ─────────────────────────────────────────────────
 CITATION_FOOTER <- tags$div(
-  style = paste0(
-    "border-top:2px solid #e0d4f0;margin-top:28px;padding:20px 28px 16px 28px;",
-    "background:#faf7fd;font-family:sans-serif;font-size:.82rem;color:#555;"
+  class = "citation-footer",
+  style = "background:#fff; border-top:1px solid #e0d4f0;
+           padding:22px 26px; margin-top:32px; font-size:0.85rem;
+           color:#444; line-height:1.55;",
+  tags$h4(
+    style = "margin:0 0 10px 0; color:#51247a; font-size:0.95rem;",
+    "How to cite this tool"
   ),
-  tags$div(
-    style = "display:flex;align-items:center;gap:14px;margin-bottom:10px;",
-    tags$span(style = "font-size:1rem;font-weight:700;color:#51247a;",
-              "How to cite this tool"),
-    tags$a("→ Tutorial", href = "https://ladal.edu.au/tutorials/concordancing_tutorial/concordancing_tutorial.html", target = "_blank",
-           style = "font-size:.78rem;color:#51247a;")
-  ),
-  tags$blockquote(
-    style = "border-left:3px solid #c8b8de;padding-left:12px;margin:0 0 10px 0;color:#444;",
-    HTML(paste0(
-      "Schweinberger, Martin. (2026). ",
-      "<em>WordFinder: A browser-based KWIC concordancing tool</em>. ",
-      "Brisbane: The University of Queensland. ",
-      "Language Technology and Data Analysis Laboratory (LADAL). ",
-      "Retrieved from https://ladal.edu.au/tools.html"
-    ))
+  tags$p(
+    style = "margin:0 0 12px 0;",
+    "Schweinberger, Martin. (2026). ",
+    tags$em("WordFinder: A Browser-Based KWIC Concordancer for Corpus Analysis"),
+    " (Version 1.0.0) [Computer software]. Zenodo. ",
+    tags$a(
+      href = "https://doi.org/10.5281/zenodo.22890722",
+      "https://doi.org/10.5281/zenodo.22890722"
+    )
   ),
   tags$details(
-    tags$summary(style = "cursor:pointer;color:#51247a;font-weight:600;font-size:.8rem;",
-                 "BibTeX"),
+    tags$summary(
+      style = "cursor:pointer; color:#51247a; font-weight:600;",
+      "BibTeX"
+    ),
     tags$pre(
-      style = paste0("background:#ece8f5;border-radius:5px;padding:10px;",
-                     "font-size:.75rem;overflow-x:auto;margin-top:6px;"),
-      paste0(
-        "@misc{schweinberger2026wordfinder,\n",
-        "  author       = {Schweinberger, Martin},\n",
-        "  title        = {WordFinder: A browser-based KWIC concordancing tool},\n",
-        "  year         = {2026},\n",
-        "  organization = {The University of Queensland},\n",
-        "  url          = {https://ladal.edu.au/tools.html}\n",
-        "}"
-      )
+      style = "background:#f7f3fb; padding:12px; border-radius:4px;
+               font-size:0.78rem; overflow-x:auto; margin-top:8px;",
+      "@software{schweinberger_2026_wordfinder,
+  author       = {Schweinberger, Martin},
+  title        = {{WordFinder: A Browser-Based KWIC Concordancer for Corpus Analysis}},
+  year         = {2026},
+  month        = sep,
+  publisher    = {Zenodo},
+  version      = {1.0.0},
+  doi          = {10.5281/zenodo.22890722},
+  url          = {https://doi.org/10.5281/zenodo.22890722}
+}"
     )
   )
 )
