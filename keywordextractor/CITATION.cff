@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata below."
+title: "KeywordExtractor: A Browser-Based Tool for Keyness Analysis and Distinctive-Vocabulary Extraction"
+abstract: "KeywordExtractor is a browser-based Shiny application for keyness analysis: identifying vocabulary that is statistically over- or under-represented in a target corpus compared with a reference corpus. It computes log-likelihood, chi-squared, and log-ratio effect sizes using the quanteda toolkit, and displays results as sortable, filterable tables with adjustable significance thresholds. Suitable for teaching and research in corpus linguistics, sociolinguistics, discourse analysis, and the digital humanities."
+type: software
+authors:
+  - family-names: Schweinberger
+    given-names: Martin
+    orcid: "https://orcid.org/0000-0003-1923-9153"
+    affiliation: "Language Technology and Data Analysis Laboratory (LADAL), The University of Queensland"
+version: "1.0.0"
+date-released: "2026-09-22"
+license: MIT
+doi: "10.5281/zenodo.22970124"
+url: "https://ladal.edu.au/tools.html"
+repository-code: "https://github.com/SLCLADAL/tools/tree/main/keywordextractor"
+keywords:
+  - corpus linguistics
+  - text analysis
+  - computational linguistics
+  - digital humanities
+  - LADAL
+  - keyness
+  - keywords
+  - log-likelihood
+  - quanteda
+  - corpus comparison
+  - R
+  - Shiny
